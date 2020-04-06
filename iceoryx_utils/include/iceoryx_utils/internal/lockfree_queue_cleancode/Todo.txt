@@ -1,0 +1,5 @@
+cyclic_index.hpp #include <stdint.h> nicht im namespace iox
+globale using declarations nicht im namespace iox
+IndexQueue alle atomic operations relaxed -> memory neutral keine synchronization notwendig muss die LockfreeQueue machen
+IndexQueue push(wrongIdx -> endless loop if wrongIdx > MAXIndex else duplicates
+return type and param type for pop and push ElementType

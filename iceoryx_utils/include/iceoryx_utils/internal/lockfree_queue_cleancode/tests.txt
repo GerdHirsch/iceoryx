@@ -1,0 +1,45 @@
+Äquivalenzklassen
+push
+A.) no concurrency
+B.) SUT runs to checkpoint, test runs to end, SUT runs to end
+AfterLoadPosition, AfterLoadValue
+C.) SUT runs to checkpoint, test runs to BeforeUpdatePosition, SUT runs to end, test runs to end
+AfterLoadValue / AfterLoadPosition are equivalent and are tested in B, hence only one test is needed
+
+A.) ==================
+push no concurrency
+SUT.push 
+-> result success
+
+B.)===================
+SUT.push checkpoint AfterLoadPosition 
+->run test thread push -> updates value
+-> SUT run thread
+-> SUT loads value
+-> SUT value !isFree()
+-> SUT.updateNextWritePosition writePosition is updated by test thread
+-> SUT do it again
+-> result success
+
+SUT.push checkpoint AfterLoadValue
+-> test run thread push -> updates value
+-> SUT run thread
+-> SUT value isFree()
+-> SUT value cannot be updated 
+-> SUT updateNextWritePosition writePositon is updated by test thread 
+-> SUT do it again
+-> result success
+
+C.)=================== test BeforeUpdatePosition
+SUT push checkpoint AfterLoadValue
+-> test thread push checkpoint BeforeUpdatePosition
+-> test push -> updates value
+-> SUT run thread
+-> SUT value isFree()
+-> SUT value cannot be updated 
+-> SUT updateNextWritePosition writePositon is updated by test thread 
+-> SUT do it again
+-> result success
+
+
+pop no concurrency

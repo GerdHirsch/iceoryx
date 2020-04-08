@@ -5,12 +5,12 @@
  *      Author: user
  */
 
-#include "../include/GetMinSizedType.hpp"
+#include "../include/iox/GetMinSizedType.hpp"
+#include "../include/iox/unique_index.hpp"
 
 #include <iostream>
 #include <cstdint>
 
-#include "../include/unique_index.hpp"
 using namespace std;
 
 void demoIdentity(){

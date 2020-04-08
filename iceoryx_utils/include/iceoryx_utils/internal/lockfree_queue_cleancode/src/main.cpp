@@ -4,7 +4,6 @@
  *  Created on: Mar 21, 2020
  *      Author: user
  */
-#include "../include/cyclic_index.hpp"
 
 #include <iostream>
 using namespace std;

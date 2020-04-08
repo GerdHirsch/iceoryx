@@ -4,7 +4,7 @@
  *  Created on: Mar 23, 2020
  *      Author: user
  */
-#include "../include/cyclic_index.hpp"
+#include "../include/iox/cyclic_index.hpp"
 
 #include <iostream>
 #include <limits>

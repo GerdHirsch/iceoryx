@@ -5,9 +5,9 @@
  *      Author: user
  */
 
-#include "../include/index_queue.hpp"
-#include "../include/unique_index.hpp"
-#include "../include/gated_monitoring_policy.hpp"
+#include "../include/iox/index_queue.hpp"
+#include "../include/iox/unique_index.hpp"
+#include "../include/iox/gated_monitoring_policy.hpp"
 
 #include <iostream>
 

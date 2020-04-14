@@ -37,8 +37,8 @@ template<class SUT>
 using IQTestValueClassC = IndexQueueTestMultithreaded<SUT, ParameterValueClassC<SUT>>;
 //==============================================
 template<std::size_t MAX>
-using Queue = iox::mk::IndexQueue<MAX>;
-//using Queue = iox::IndexQueue<MAX>;
+//using Queue = iox::mk::IndexQueue<MAX>;
+using Queue = iox::IndexQueue<MAX>;
 
 //==============================================
 void testIndexQueueMultiThreaded(int argc, char const *argv[]) {
@@ -67,9 +67,9 @@ void testIndexQueueMultiThreaded(int argc, char const *argv[]) {
 	//============================================
 	// IndexQueue Class C tests:
 	// SUT thread runs to checkpoint,
-	// test thread runs to checkpoint,
+	// test thread runs to checkpoint(BeforeUpdatePosition),
 	// SUT thread runs to completion
-	// test thread runs to completion checkPoint(EndOfMethod)
+	// test thread runs to completion
 	//============================================
 //	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<1>>::make_suite(), "class C IndexQueue");
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<2>>::make_suite(), "class C Position IndexQueue");

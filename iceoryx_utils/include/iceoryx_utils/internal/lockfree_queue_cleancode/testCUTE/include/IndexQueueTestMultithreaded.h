@@ -31,15 +31,21 @@ public:
 	using NativeType = typename SUT::NativeType;
 	static constexpr auto CAPACITY = SUT::CAPACITY;
 
+	static void print(SUT const& sut, const char* message){
+		return; // switch on/off output
+		std::cout << std::endl << message << std::endl;
+		sut.print();
+	}
 
 	/** tests should be made with
 	 * different CAPACITIYs of the SUT
 	 */
 	// equivalence class B & C
 	void pushToEmptyQueue();
-	// equivalence class B & C
 	void pushToFilledQueue();
+
 	void popFromEmptyWhilePush();
+	void popFromFilledWhilePop();
 	//=========================
 	// setup
 	//=========================
@@ -55,6 +61,7 @@ public:
 		s.push_back(CUTE_SMEMFUN(DerivedTest, pushToEmptyQueue));
 		s.push_back(CUTE_SMEMFUN(DerivedTest, pushToFilledQueue));
 		s.push_back(CUTE_SMEMFUN(DerivedTest, popFromEmptyWhilePush));
+		s.push_back(CUTE_SMEMFUN(DerivedTest, popFromFilledWhilePop));
 		return s;
 	}
 };
@@ -105,16 +112,14 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 		Thread SUTthread(SUTTask);
 		SUTpolicy.waitForArrival(sutCheckpoint);
 
-		std::cout<< std::endl << "sut after sutCheckpoint" << std::endl;
-		sut.print();
+		print(sut, "sut after sutCheckpoint");
 
 		// interrupt test
 		testPolicy.lock(testCheckpoint); // 0 == no checkpoint
 		Thread testThread(testTask);
 		testPolicy.waitForArrival(testCheckpoint);
 
-		std::cout<< std::endl << "sut after testCheckpoint" << std::endl;
-		sut.print();
+		print(sut, "sut after testCheckpoint");
 
 		//release sut to proceed
 		SUTpolicy.unlock();
@@ -124,8 +129,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 		testPolicy.unlock();
 		testThread.join();
 
-		std::cout<< std::endl << "sut after thread.join" << std::endl;
-		sut.print();
+		print(sut, "sut after thread.join");
 	}
 	succeed = sut.pop(idxTestToPush);
 	ASSERTM("no more unique indices available", succeed);
@@ -182,19 +186,14 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 		Thread SUTthread(SUTTask);
 		SUTpolicy.waitForArrival(sutCheckpoint);
 
-		std::cout<< std::endl << "sut after sutCheckpoint" << std::endl;
-		sut.print();
+		print(sut, "sut after sutCheckpoint");
 
 		// interrupt test only after publishValueAt
 		testPolicy.lock(testCheckpoint); // 0 == no checkpoint
 		Thread testThread(testTask);
 		testPolicy.waitForArrival(testCheckpoint);
 
-		std::cout<< std::endl << "source after testCheckpoint" << std::endl;
-		source.print();
-
-		std::cout<< std::endl << "sut after testCheckpoint" << std::endl;
-		sut.print();
+		print(sut, "source after testCheckpoint");
 
 		//release sut to proceed
 		SUTpolicy.unlock();
@@ -204,8 +203,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 		testPolicy.unlock();
 		testThread.join();
 
-		std::cout << std::endl << "sut after thread.join" << std::endl;
-		sut.print();
+		print(sut, "sut after thread.join");
 	}
 	// drain sut
 	UniqueIdx dummy;
@@ -213,10 +211,8 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 		sut.pop(dummy);
 		source.push(std::move(dummy));
 	}
-	std::cout<< std::endl << "sut after drain sut" << std::endl;
-	sut.print();
-	std::cout << std::endl << "source after drain sut" << std::endl;
-	source.print();
+	print(sut, "sut after drain sut");
+	print(source, "source after drain sut");
 
 	succeed = sut.pop(idxTestToPush);
 	ASSERTM("no more unique indices available", succeed);
@@ -292,16 +288,14 @@ void IndexQueueTestMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 		Thread SUTthread(SUTTask);
 		SUTpolicy.waitForArrival(sutCheckpoint);
 
-		std::cout<< std::endl << "sut after sutCheckpoint" << std::endl;
-		sut.print();
+		print(sut, "sut after sutCheckpoint");
 
 		// interrupt test
 		testPolicy.lock(testCheckpoint); // 0 == no checkpoint
 		Thread testThread(testTask);
 		testPolicy.waitForArrival(testCheckpoint);
 
-		std::cout<< std::endl << "sut after testCheckpoint" << std::endl;
-		sut.print();
+		print(sut, "sut after testCheckpoint");
 
 		//release sut to proceed
 		SUTpolicy.unlock();
@@ -311,9 +305,61 @@ void IndexQueueTestMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 		testPolicy.unlock();
 		testThread.join();
 
-		std::cout<< std::endl << "sut after thread.join" << std::endl;
-		sut.print();
+		print(sut, "sut after thread.join");
 	}
 	ASSERT_EQUALM("pop not succeed", expectedPopReturnValue, popReturnValue);
 	ASSERT_EQUALM("popped value", expectedPopValueSUT, idxSUTToPop.getIndex());
+}
+//---------------------------------------------------------------------
+template<class SUTType, class Params>
+inline
+void IndexQueueTestMultithreaded<SUTType, Params>::popFromFilledWhilePop(){
+	using namespace std; //numerical literals
+	using UniqueIdx = typename SUT::UniqueIndexType;
+	using NativeType = typename SUT::NativeType;
+
+	SUT sut(SUT::ConstructFull::Policy);
+	Policy firstPolicy;
+
+	constexpr auto firstCheckpoint = Params::sutCheckpoint;
+
+	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	UniqueIdx idxFirstToPop{std::numeric_limits<NativeType>::max()};
+	NativeType expectedFirstPopValue{1};
+	bool popFirstReturnValue{false};
+
+	// firstTask will be interrupted
+	auto firstTask = [&](){
+		popFirstReturnValue = sut.pop(idxFirstToPop, firstPolicy);
+	};
+
+	UniqueIdx idxSecondToPop{std::numeric_limits<NativeType>::max()};
+	NativeType expectedSecondPopValue{0};
+	bool popSecondReturnValue{false};
+
+	constexpr bool expectedPopReturnValue{true};
+
+	{	// no assertions inside this block
+
+		// interrupt sut
+		firstPolicy.lock(firstCheckpoint);
+		Thread firstThread(firstTask);
+		firstPolicy.waitForArrival(firstCheckpoint);
+
+		print(sut, "sut after sutCheckpoint");
+
+		popSecondReturnValue = sut.pop(idxSecondToPop);
+
+		print(sut, "sut after test pop");
+
+		//release first to proceed
+		firstPolicy.unlock();
+		firstThread.join();
+
+		print(sut, "sut after thread.join");
+	}
+	ASSERT_EQUALM("first pop not succeed", expectedPopReturnValue, popFirstReturnValue);
+	ASSERT_EQUALM("first popped value", expectedFirstPopValue, idxFirstToPop.getIndex());
+	ASSERT_EQUALM("second pop not succeed", expectedPopReturnValue, popSecondReturnValue);
+	ASSERT_EQUALM("second value", expectedSecondPopValue, idxSecondToPop.getIndex());
 }

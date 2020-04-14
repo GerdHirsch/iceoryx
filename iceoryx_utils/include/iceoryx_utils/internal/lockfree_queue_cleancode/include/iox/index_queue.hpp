@@ -38,7 +38,7 @@ class IndexQueue
 
     using UniqueIndexType = UniqueIndex<NativeType, CAPACITY>;
 //    using indexvalue_t = word_t;
-    void print();
+    void print() const;
 //    template<class MonitoringPolicy=EmptyMonitoringPolicy>
 //    void demoMonitoringPolicy(MonitoringPolicy const& policy=MonitoringPolicy());
 
@@ -49,9 +49,9 @@ class IndexQueue
   private:
     using Index = CyclicIndex<CAPACITY>;
 
-    Index loadNextReadPosition();
-    Index loadNextWritePosition();
-    Index loadValueAt(Index position);
+    Index loadNextReadPosition() const;
+    Index loadNextWritePosition() const;
+    Index loadValueAt(Index position) const;
     bool tryToPublishAt(Index writePosition, Index& oldValue, Index newValue);
     bool tryToAchieveOwnership(Index& readPosition); // head
     Index updateNextWritePosition(Index oldWritePosition);// tail

@@ -4,7 +4,7 @@ namespace iox
 
 template<uint64_t Capacity>
 void
-IndexQueue<Capacity>::print()
+IndexQueue<Capacity>::print() const
 {
 	//return;// switch on/off output
 
@@ -53,19 +53,19 @@ constexpr typename IndexQueue<Capacity>::NativeType IndexQueue<Capacity>::capaci
 
 template<uint64_t Capacity>
 typename IndexQueue<Capacity>::Index
-IndexQueue<Capacity>::loadNextReadPosition(){
+IndexQueue<Capacity>::loadNextReadPosition() const{
 	return m_head.load(std::memory_order_relaxed);
 //	return m_head.load(std::memory_order_acquire);
 }
 template<uint64_t Capacity>
 typename IndexQueue<Capacity>::Index
-IndexQueue<Capacity>::loadNextWritePosition(){
+IndexQueue<Capacity>::loadNextWritePosition() const{
 	return m_tail.load(std::memory_order_relaxed);
 //	return m_tail.load(std::memory_order_acquire);
 }
 template<uint64_t Capacity>
 typename IndexQueue<Capacity>::Index
-IndexQueue<Capacity>::loadValueAt(typename IndexQueue<Capacity>::Index position){
+IndexQueue<Capacity>::loadValueAt(typename IndexQueue<Capacity>::Index position) const{
 	return m_values[position.getIndex()].load(std::memory_order_relaxed);
 //	return m_values[position.getIndex()].load(std::memory_order_acquire);
 }

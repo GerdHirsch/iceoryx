@@ -128,7 +128,7 @@ void IndexQueue<Capacity>::push(UniqueIndexType uniqueIdx, MonitoringPolicy cons
 	// see: en.cppreference.com/w/cpp/language/as_if
 	// only checkPoints could be reordered,
 	// but this would only make the test fail
-	bool notPublished = true;
+	constexpr bool notPublished = true;
     auto writePosition = loadNextWritePosition();
     do
     {
@@ -142,8 +142,8 @@ void IndexQueue<Capacity>::push(UniqueIndexType uniqueIdx, MonitoringPolicy cons
         if(isFree()){
         	Index newValue(uniqueIdx, writePosition.getCycle() );
         	//if publish fails, another thread has published before
-        	auto succeed = tryToPublishAt(writePosition, oldValue, newValue);
-        	if(succeed){
+        	auto published = tryToPublishAt(writePosition, oldValue, newValue);
+        	if(published){
         		break;
         	}
         }
@@ -176,8 +176,8 @@ bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy cons
         auto isEmpty = [&](){ return value.isBehind(readPosition);};
 
         if(isUpToDate()){
-        	auto succeed = tryToAchieveOwnership(readPosition);
-			if (succeed)
+        	auto ownershipAchieved = tryToAchieveOwnership(readPosition);
+			if (ownershipAchieved)
 			{
 				break; // pop successful
 			}
@@ -232,8 +232,8 @@ bool IndexQueue<Capacity>::popIfFull(UniqueIndexType& index)
 				readPosition.isBehind(writePosition);
 	};
 	if(isFull()){
-		auto succeed = tryToAchieveOwnership(readPosition);
-		if(succeed){
+		auto ownershipAchieved = tryToAchieveOwnership(readPosition);
+		if(ownershipAchieved){
 			index = value.getIndex();
 			return true;
 		}

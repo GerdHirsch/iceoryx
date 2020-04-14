@@ -114,8 +114,15 @@ IndexQueue<Capacity>::tryToAchieveOwnership(Index& oldReadPosition){
 			std::memory_order_relaxed);
 }
 
-//void IndexQueue<Capacity>::push(indexvalue_t identity)
-template<uint64_t Capacity>
+/**
+ * push: not waitfree, starvation may occur in the surrounding Queue,
+ * in the following rare cases, P_SUT may wait forever
+ * P_SUT (System Under Test) is the process to be considered
+ * if P_SUT will be interrupted each time before tryToPublishAt
+ * and another thread publishes at this position, P_SUT will loop forever
+ * hint: there must be pops also between the pushes, otherwise
+ * the queue will be full and no more uniqueIdx are available to push
+ */template<uint64_t Capacity>
 template<class MonitoringPolicy>
 void IndexQueue<Capacity>::push(UniqueIndexType uniqueIdx, MonitoringPolicy const& policy)
 {
@@ -157,7 +164,15 @@ void IndexQueue<Capacity>::push(UniqueIndexType uniqueIdx, MonitoringPolicy cons
     updateNextWritePosition(writePosition);
     policy.checkPoint(EndOfMethod);
 }
-
+/**
+ * pop: not waitfree, starvation may occur in the surrounding Queue,
+ * in the following rare cases, P_SUT may wait forever
+ * P_SUT (System Under Test) is the process to be considered
+ * if P_SUT will be interrupted each time before tryToAchieveOwnership
+ * and another thread achieves ownership, P_SUT will loop forever
+ * hint: there must be pushes also between the pops, otherwise
+ * the queue will be empty and P_SUT.pop returns false
+ */
 template<uint64_t Capacity>
 template<class MonitoringPolicy>
 bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy const& policy)
@@ -194,8 +209,7 @@ bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy cons
 
 /**
  * popIfFull: not waitfree, starvation may occur in the surrounding Queue,
- * in the following rare cases,
- * P_SUT may wait forever,
+ * in the following rare cases, P_SUT may wait forever,
  * P_SUT (System Under Test) is the process to be considered
  * The possibility depends on the relationship between the number of
  * elements, the number of threads/processes and the degree of
@@ -220,6 +234,12 @@ bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy cons
  * 	freeIdx.pop -> false
  * 	usedIdx.popIfFull -> false
  * Pz etc
+ */
+/**
+ * popIfFull no longer works, if we loose a UniqueIndex,
+ * cause isFull() will return always false! even though,
+ * no other threads hold the ownership of a UniqueIndex
+ * and freeIdx == [empty]
  */
 template<uint64_t Capacity>
 bool IndexQueue<Capacity>::popIfFull(UniqueIndexType& index)

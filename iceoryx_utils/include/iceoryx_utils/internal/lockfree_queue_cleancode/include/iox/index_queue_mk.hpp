@@ -22,6 +22,7 @@
 
 namespace iox
 {
+namespace mk{
 /// @brief lockfree queue capable of storing indices 0,1,... Capacity-1
 template <uint64_t Capacity>
 class IndexQueue
@@ -89,7 +90,8 @@ class IndexQueue
     /// @return true iff removal was successful (i.e. queue was not empty)
     /// value is only valid if the function returns true
     /// threadsafe, lockfree
-    bool pop(indexvalue_t& index);
+    template<class MonitoringPolicy=EmptyMonitoringPolicy>
+    bool pop(indexvalue_t& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
 
     /// @brief tries to remove index in FIFO order iff the queue is full
     /// @return true iff removal was successful (i.e. queue was full)
@@ -104,6 +106,6 @@ class IndexQueue
     /// (but it was at some point during the call)
     bool empty();
 };
-} // namespace iox
+}} // namespace iox::mk
 
-#include "index_queue.inl"
+#include "index_queue_mk.inl"

@@ -8,6 +8,7 @@
 #include "../include/IndexQueueTestMultithreaded.h"
 //SUTs
 #include <iox/index_queue.hpp>
+#include <iox/index_queue_mk.hpp>
 //CUTE
 #include "cute.h"
 #include "ide_listener.h"
@@ -36,7 +37,8 @@ template<class SUT>
 using IQTestValueClassC = IndexQueueTestMultithreaded<SUT, ParameterValueClassC<SUT>>;
 //==============================================
 template<std::size_t MAX>
-using Queue = iox::IndexQueue<MAX>;
+using Queue = iox::mk::IndexQueue<MAX>;
+//using Queue = iox::IndexQueue<MAX>;
 
 //==============================================
 void testIndexQueueMultiThreaded(int argc, char const *argv[]) {

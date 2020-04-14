@@ -1,6 +1,7 @@
 #include <iostream>
 namespace iox
 {
+namespace mk{
 template<uint64_t Capacity>
 void
 IndexQueue<Capacity>::print()
@@ -105,14 +106,17 @@ void IndexQueue<Capacity>::push(indexvalue_t index, MonitoringPolicy const& poli
     policy.checkPoint(EndOfMethod);
 }
 
-template <uint64_t Capacity>
-bool IndexQueue<Capacity>::pop(indexvalue_t& index)
+template<uint64_t Capacity>
+template<class MonitoringPolicy>
+bool IndexQueue<Capacity>::pop(indexvalue_t& uniqueIdx, MonitoringPolicy const& policy)
 {
     Index value;
     do
     {
         auto oldHead = m_head.load(std::memory_order_acquire);
+        policy.checkPoint(AfterLoadPosition);
         value = m_values[oldHead.getIndex()].load(std::memory_order_relaxed); // (value load)
+        policy.checkPoint(AfterLoadValue);
         auto headCycle = oldHead.getCycle();
         auto valueCycle = value.getCycle();
 
@@ -134,7 +138,8 @@ bool IndexQueue<Capacity>::pop(indexvalue_t& index)
 
     } while (true); // we leave iff the CAS was successful
 
-    index = UniqueIndexType(value.getIndex());
+    uniqueIdx = UniqueIndexType(value.getIndex());
+    policy.checkPoint(EndOfMethod);
     return true;
 }
 
@@ -196,4 +201,4 @@ bool IndexQueue<Capacity>::empty()
     }
     return false;
 }
-} // namespace iox
+}} // namespace iox::mk

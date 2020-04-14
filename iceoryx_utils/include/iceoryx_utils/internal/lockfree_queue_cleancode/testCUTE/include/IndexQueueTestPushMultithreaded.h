@@ -24,7 +24,7 @@ struct TestParameter{
 };
 
 template<class SUTType, class Parameter>
-class IndexQueueTestMultithreaded{
+class IndexQueueTestPushMultithreaded{
 public:
 	using SUT  = SUTType;
 	using UniqueIdx = typename SUT::UniqueIndexType;
@@ -54,7 +54,7 @@ public:
 	//=========================
 	// register tests
 	//=========================
-	using this_type = IndexQueueTestMultithreaded<SUTType, Parameter>;
+	using this_type = IndexQueueTestPushMultithreaded<SUTType, Parameter>;
 	template<class DerivedTest = this_type>
 	static cute::suite make_suite(){
 		cute::suite s { };
@@ -72,7 +72,7 @@ public:
 //---------------------------------------------------------------------
 template<class SUTType, class Params>
 inline
-void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
+void IndexQueueTestPushMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 	using namespace std; //numerical literals
 	using UniqueIdx = typename SUT::UniqueIndexType;
 	using NativeType = typename SUT::NativeType;
@@ -144,7 +144,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 //---------------------------------------------------------------------
 template<class SUTType, class Params>
 inline
-void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
+void IndexQueueTestPushMultithreaded<SUTType, Params>::pushToFilledQueue(){
 	using namespace std; //numerical literals
 
 	SUT source(SUT::ConstructFull::Policy);
@@ -227,7 +227,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 //---------------------------------------------------------------------
 template<class SUTType, class Params>
 inline
-void IndexQueueTestMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
+void IndexQueueTestPushMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 	using namespace std; //numerical literals
 	using UniqueIdx = typename SUT::UniqueIndexType;
 	using NativeType = typename SUT::NativeType;
@@ -313,7 +313,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 //---------------------------------------------------------------------
 template<class SUTType, class Params>
 inline
-void IndexQueueTestMultithreaded<SUTType, Params>::popFromFilledWhilePop(){
+void IndexQueueTestPushMultithreaded<SUTType, Params>::popFromFilledWhilePop(){
 	using namespace std; //numerical literals
 	using UniqueIdx = typename SUT::UniqueIndexType;
 	using NativeType = typename SUT::NativeType;

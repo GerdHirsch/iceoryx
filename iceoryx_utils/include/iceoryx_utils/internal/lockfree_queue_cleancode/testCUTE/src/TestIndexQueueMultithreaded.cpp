@@ -5,8 +5,6 @@
  *      Author: Gerd
  */
 //tests
-#include "../include/IndexQueueTestMultithreaded.h"
-//SUTs
 #include <iox/index_queue.hpp>
 #include <iox/index_queue_mk.hpp>
 //CUTE
@@ -14,6 +12,7 @@
 #include "ide_listener.h"
 #include "xml_listener.h"
 #include "cute_runner.h"
+#include "../include/IndexQueueTestPushMultithreaded.h"
 
 // tests & TestParameter
 template<class SUT>
@@ -28,13 +27,13 @@ using ParameterValueClassC = TestParameter<SUT::AfterLoadValue, SUT::BeforeUpdat
 // tests for equivalence classes B and C
 // IQTest IndexQueueTest Position/Value Class B/C
 template<class SUT>
-using IQTestPositionClassB = IndexQueueTestMultithreaded<SUT, ParameterPositionClassB<SUT>>;
+using IQTestPositionClassB = IndexQueueTestPushMultithreaded<SUT, ParameterPositionClassB<SUT>>;
 template<class SUT>
-using IQTestValueClassB = IndexQueueTestMultithreaded<SUT, ParameterValueClassB<SUT>>;
+using IQTestValueClassB = IndexQueueTestPushMultithreaded<SUT, ParameterValueClassB<SUT>>;
 template<class SUT>
-using IQTestPositionClassC = IndexQueueTestMultithreaded<SUT, ParameterPositionClassC<SUT>>;
+using IQTestPositionClassC = IndexQueueTestPushMultithreaded<SUT, ParameterPositionClassC<SUT>>;
 template<class SUT>
-using IQTestValueClassC = IndexQueueTestMultithreaded<SUT, ParameterValueClassC<SUT>>;
+using IQTestValueClassC = IndexQueueTestPushMultithreaded<SUT, ParameterValueClassC<SUT>>;
 //==============================================
 template<std::size_t MAX>
 //using Queue = iox::mk::IndexQueue<MAX>;

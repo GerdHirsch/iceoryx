@@ -16,8 +16,6 @@
 
 // tests & TestParameter
 template<class SUT>
-using ParameterRunToCompletion = TestParameter<0, 0>;
-template<class SUT>
 using ParameterPositionClassB = TestParameter<SUT::AfterLoadPosition, SUT::EndOfMethod>;
 template<class SUT>
 using ParameterValueClassB = TestParameter<SUT::AfterLoadValue, SUT::EndOfMethod>;
@@ -28,8 +26,6 @@ using ParameterValueClassC = TestParameter<SUT::AfterLoadValue, SUT::BeforeUpdat
 
 // tests for equivalence classes B and C
 // IQTest IndexQueueTest Position/Value Class B/C
-template<class SUT>
-using IQTestRunToCompletion = IndexQueueTestMultithreaded<SUT, ParameterRunToCompletion<SUT>>;
 template<class SUT>
 using IQTestPositionClassB = IndexQueueTestMultithreaded<SUT, ParameterPositionClassB<SUT>>;
 template<class SUT>
@@ -50,7 +46,7 @@ void testIndexQueueMultiThreaded(int argc, char const *argv[]) {
 	//============================================
 	// IndexQueue Class B tests:
 	// SUT thread runs to checkpoint,
-	// test thread runs to completion
+	// test thread runs to completion checkPoint(EndOfMethod)
 	// SUT thread runs to completion
 	//============================================
 //	cute::makeRunner(listener,argc,argv)(IQTestRunToCompletion<Queue<3>>::make_suite(), "class B Position IndexQueue");
@@ -71,7 +67,7 @@ void testIndexQueueMultiThreaded(int argc, char const *argv[]) {
 	// SUT thread runs to checkpoint,
 	// test thread runs to checkpoint,
 	// SUT thread runs to completion
-	// test thread runs to completion
+	// test thread runs to completion checkPoint(EndOfMethod)
 	//============================================
 //	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<1>>::make_suite(), "class C IndexQueue");
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<2>>::make_suite(), "class C Position IndexQueue");

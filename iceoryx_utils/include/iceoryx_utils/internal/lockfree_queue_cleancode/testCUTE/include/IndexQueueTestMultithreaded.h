@@ -14,11 +14,12 @@
 #include <cstddef>
 #include <thread>
 #include <chrono>
+#include <limits>
 #include <iostream>
 
-template<uint64_t SUTcheckpoint_, uint64_t testCheckpoint_>
+template<uint64_t sutCheckpoint_, uint64_t testCheckpoint_>
 struct TestParameter{
-	static constexpr auto SUTcheckpoint = SUTcheckpoint_;
+	static constexpr auto sutCheckpoint = sutCheckpoint_;
 	static constexpr auto testCheckpoint = testCheckpoint_;
 };
 
@@ -38,19 +39,12 @@ public:
 	void pushToEmptyQueue();
 	// equivalence class B & C
 	void pushToFilledQueue();
+	void popFromEmptyWhilePush();
 	//=========================
 	// setup
 	//=========================
 	using Thread = std::thread;
 	using Policy = iox::GatedMonitoringPolicy<iox::EmptyMonitoringPolicy>;
-	enum {
-		AfterLoadPosition = SUT::AfterLoadPosition
-		, AfterLoadValue = SUT::AfterLoadValue
-		, BeforeUpdatePosition = SUT::BeforeUpdatePosition
-	};
-
-	enum { expectedIsEmpty /*pop returns false*/, expectedIsSkipped/*push returns true*/};
-
 	//=========================
 	// register tests
 	//=========================
@@ -60,11 +54,14 @@ public:
 		cute::suite s { };
 		s.push_back(CUTE_SMEMFUN(DerivedTest, pushToEmptyQueue));
 		s.push_back(CUTE_SMEMFUN(DerivedTest, pushToFilledQueue));
+		s.push_back(CUTE_SMEMFUN(DerivedTest, popFromEmptyWhilePush));
 		return s;
 	}
 };
 //---------------------------------------------------------------------
-// SUT interrupted AfterLoadPosition test runs to completion: equivalence class B
+// SUT will be interrupted AfterLoad Position/Value
+// test will be interrupted BeforeUpdatePosition or
+// runs to completion (EndOfMethod)
 //---------------------------------------------------------------------
 template<class SUTType, class Params>
 inline
@@ -77,7 +74,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 	SUT sut;
 	Policy SUTpolicy;
 	Policy testPolicy;
-	constexpr auto SUTcheckpoint = Params::SUTcheckpoint;
+	constexpr auto sutCheckpoint = Params::sutCheckpoint;
 	constexpr auto testCheckpoint = Params::testCheckpoint;
 
 	UniqueIdx idxSUTToPush;
@@ -92,9 +89,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 	succeed = source.pop(idxTestToPush);
 
 	ASSERTM("no more unique indices available, Capacity must be greater 1", succeed);
-	ASSERT_EQUALM("first pop", expectedTest, idxTestToPush.getIndex());
-
-//	sut.print();
+	ASSERT_EQUALM("second pop", expectedTest, idxTestToPush.getIndex());
 
 	// sut will be interrupted
 	auto SUTTask = [&sut, &idxSUTToPush, &SUTpolicy](){
@@ -103,13 +98,14 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 	auto testTask = [&sut, &idxTestToPush, &testPolicy](){
 		sut.push(std::move(idxTestToPush), testPolicy);
 	};
-	{
-		// interrupt sut
-		SUTpolicy.lock(SUTcheckpoint);
-		Thread SUTthread(SUTTask);
-		SUTpolicy.waitForArrival(SUTcheckpoint);
+	{	// no assertions inside this block
 
-		std::cout<< std::endl << "after SUTcheckpoint" << std::endl;
+		// interrupt sut
+		SUTpolicy.lock(sutCheckpoint);
+		Thread SUTthread(SUTTask);
+		SUTpolicy.waitForArrival(sutCheckpoint);
+
+		std::cout<< std::endl << "sut after sutCheckpoint" << std::endl;
 		sut.print();
 
 		// interrupt test
@@ -117,7 +113,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 		Thread testThread(testTask);
 		testPolicy.waitForArrival(testCheckpoint);
 
-		std::cout<< std::endl << "after testCheckpoint" << std::endl;
+		std::cout<< std::endl << "sut after testCheckpoint" << std::endl;
 		sut.print();
 
 		//release sut to proceed
@@ -128,10 +124,9 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 		testPolicy.unlock();
 		testThread.join();
 
-		std::cout<< std::endl << "after thread.join" << std::endl;
+		std::cout<< std::endl << "sut after thread.join" << std::endl;
 		sut.print();
 	}
-	//todo sometimes this test fails !!! reason: memory_order_relaxed in IndexQueue ???
 	succeed = sut.pop(idxTestToPush);
 	ASSERTM("no more unique indices available", succeed);
 	ASSERT_EQUALM("first pop", expectedTest, idxTestToPush.getIndex());
@@ -141,7 +136,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 	ASSERT_EQUALM("second pop", expectedSUT, idxSUTToPush.getIndex());
 }
 //---------------------------------------------------------------------
-// SUT interrupted at SUTcheckpoint test runs to testCheckpoint, SUT runs to completion
+//
 //---------------------------------------------------------------------
 template<class SUTType, class Params>
 inline
@@ -152,7 +147,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 	SUT sut;
 	Policy SUTpolicy;
 	Policy testPolicy;
-	constexpr auto SUTcheckpoint = Params::SUTcheckpoint;
+	constexpr auto sutCheckpoint = Params::sutCheckpoint;
 	constexpr auto testCheckpoint = Params::testCheckpoint;
 
 	UniqueIdx idxSUTToPush;
@@ -168,7 +163,7 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 	ASSERTM("no more unique indices available, Capacity must be greater 1", succeed);
 	ASSERT_EQUALM("first pop", expectedTest, idxTestToPush.getIndex());
 
-	// sut will be interrupted at SUTcheckpoint
+	// sut will be interrupted at sutCheckpoint
 	auto SUTTask = [&sut, &idxSUTToPush, &SUTpolicy](){
 		sut.push(std::move(idxSUTToPush), SUTpolicy);
 	};
@@ -180,13 +175,14 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 		}
 		sut.push(std::move(idxTestToPush), testPolicy);
 	};
-	{
-		// interrupt sut
-		SUTpolicy.lock(SUTcheckpoint);
-		Thread SUTthread(SUTTask);
-		SUTpolicy.waitForArrival(SUTcheckpoint);
+	{	// no assertions inside this block
 
-		std::cout<< std::endl << "after SUTcheckpoint" << std::endl;
+		// interrupt sut
+		SUTpolicy.lock(sutCheckpoint);
+		Thread SUTthread(SUTTask);
+		SUTpolicy.waitForArrival(sutCheckpoint);
+
+		std::cout<< std::endl << "sut after sutCheckpoint" << std::endl;
 		sut.print();
 
 		// interrupt test only after publishValueAt
@@ -194,7 +190,10 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 		Thread testThread(testTask);
 		testPolicy.waitForArrival(testCheckpoint);
 
-		std::cout<< std::endl << "after testCheckpoint" << std::endl;
+		std::cout<< std::endl << "source after testCheckpoint" << std::endl;
+		source.print();
+
+		std::cout<< std::endl << "sut after testCheckpoint" << std::endl;
 		sut.print();
 
 		//release sut to proceed
@@ -205,16 +204,19 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 		testPolicy.unlock();
 		testThread.join();
 
-		std::cout << std::endl << "after thread.join" << std::endl;
+		std::cout << std::endl << "sut after thread.join" << std::endl;
 		sut.print();
 	}
 	// drain sut
 	UniqueIdx dummy;
 	for(NativeType i=0; i<CAPACITY-2; ++i){
 		sut.pop(dummy);
+		source.push(std::move(dummy));
 	}
-	std::cout<< std::endl << "after drain sut" << std::endl;
+	std::cout<< std::endl << "sut after drain sut" << std::endl;
 	sut.print();
+	std::cout << std::endl << "source after drain sut" << std::endl;
+	source.print();
 
 	succeed = sut.pop(idxTestToPush);
 	ASSERTM("no more unique indices available", succeed);
@@ -223,4 +225,95 @@ void IndexQueueTestMultithreaded<SUTType, Params>::pushToFilledQueue(){
 	succeed = sut.pop(idxSUTToPush);
 	ASSERTM("no more unique indices available", succeed);
 	ASSERT_EQUALM("second pop", expectedSUT, idxSUTToPush.getIndex());
+}
+//---------------------------------------------------------------------
+//
+//---------------------------------------------------------------------
+template<class SUTType, class Params>
+inline
+void IndexQueueTestMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
+	using namespace std; //numerical literals
+	using UniqueIdx = typename SUT::UniqueIndexType;
+	using NativeType = typename SUT::NativeType;
+
+	SUT source(SUT::ConstructFull::Policy);
+	SUT sut;
+	Policy SUTpolicy;
+	Policy testPolicy;
+
+	constexpr auto sutCheckpoint = Params::sutCheckpoint;
+	constexpr auto testCheckpoint = Params::testCheckpoint;
+
+	//---------------------------
+	// begin region
+	// this test is a first try and must be split into two tests,
+	// no cases in tests!
+	//---------------------------
+	//if(sutCheckpoint == SUT::AfterLoadPosition)
+	// pop will succeed, there should be an index to pop
+	// else (sutCheckpoint == SUT::AfterLoadValue)
+	// pop will fail, queue seems to be empty
+
+	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	UniqueIdx idxSUTToPop{std::numeric_limits<NativeType>::max()};
+	NativeType expectedPopValueSUT{0};
+	bool expectedPopReturnValue{true};
+	bool popReturnValue{false};
+
+	UniqueIdx idxTestToPush;
+	bool succeed = source.pop(idxTestToPush);
+
+	ASSERTM("no more unique indices available", succeed);
+	ASSERT_EQUALM("expected pop value", expectedPopValueSUT, idxTestToPush.getIndex());
+
+	if(sutCheckpoint == SUT::AfterLoadValue){
+		// pop will fail, queue seems to be empty
+		expectedPopValueSUT = std::numeric_limits<NativeType>::max();
+		expectedPopReturnValue = false;
+		popReturnValue = true; // will be set to false
+	}
+	//---------------------------
+	// end region
+	// this test is a first try and must be split into two tests,
+	// no cases in tests!
+	//---------------------------
+
+	// sut will be interrupted
+	auto SUTTask = [&](){
+		popReturnValue = sut.pop(idxSUTToPop, SUTpolicy);
+	};
+	auto testTask = [&](){
+		sut.push(std::move(idxTestToPush), testPolicy);
+	};
+	{	// no assertions inside this block
+
+		// interrupt sut
+		SUTpolicy.lock(sutCheckpoint);
+		Thread SUTthread(SUTTask);
+		SUTpolicy.waitForArrival(sutCheckpoint);
+
+		std::cout<< std::endl << "sut after sutCheckpoint" << std::endl;
+		sut.print();
+
+		// interrupt test
+		testPolicy.lock(testCheckpoint); // 0 == no checkpoint
+		Thread testThread(testTask);
+		testPolicy.waitForArrival(testCheckpoint);
+
+		std::cout<< std::endl << "sut after testCheckpoint" << std::endl;
+		sut.print();
+
+		//release sut to proceed
+		SUTpolicy.unlock();
+		SUTthread.join();
+
+		//release test to proceed
+		testPolicy.unlock();
+		testThread.join();
+
+		std::cout<< std::endl << "sut after thread.join" << std::endl;
+		sut.print();
+	}
+	ASSERT_EQUALM("pop not succeed", expectedPopReturnValue, popReturnValue);
+	ASSERT_EQUALM("popped value", expectedPopValueSUT, idxSUTToPop.getIndex());
 }

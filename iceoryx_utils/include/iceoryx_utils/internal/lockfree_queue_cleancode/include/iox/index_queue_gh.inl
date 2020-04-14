@@ -6,8 +6,6 @@ template<uint64_t Capacity>
 void
 IndexQueue<Capacity>::print()
 {
-	//return;// switch on/off output
-
 	using namespace std;
 	cout << endl << "IndexQueue::print()" << endl;
 	auto rPos = loadNextReadPosition();
@@ -36,8 +34,8 @@ IndexQueue<Capacity>::IndexQueue(ConstructEmpty)
 
 template<uint64_t Capacity>
 IndexQueue<Capacity>::IndexQueue(ConstructFull)
-    : m_head(Index(0)) // nextReadPosition
-    , m_tail(Index(Capacity)) // nextWritePosition
+    : m_head(Index(0))
+    , m_tail(Index(Capacity))
 {
     for (NativeType i = 0; i < Capacity; ++i)
     {
@@ -51,23 +49,78 @@ constexpr typename IndexQueue<Capacity>::NativeType IndexQueue<Capacity>::capaci
     return Capacity;
 }
 
+//template<uint64_t Capacity>
+//void IndexQueue<Capacity>::push(indexvalue_t index)
+//{
+//    Index oldTail;
+//    do
+//    {
+////        oldTail = m_tail.load(std::memory_order_acquire);
+//        oldTail = loadTail();
+//
+//        auto position = oldTail.getIndex();
+//
+////        auto value = m_values[position].load(std::memory_order_relaxed);
+//        auto value = loadValueAt(position);
+//        auto tailCycle = oldTail.getCycle();
+//        auto valueCycle = value.getCycle();
+//        // todo gh value.isUsed(oldTail),  !isFree(oldTail)...
+//        // another thread has changed, we load tail before update
+////        if (valueCycle == tailCycle)
+//        if (isUsed(valueCycle, tailCycle))
+//        {
+//            // try to help moving the m_tail, can fail but we retry anyway and some enqueuer will succeed
+//            m_tail.compare_exchange_strong(oldTail, oldTail + 1, std::memory_order_acq_rel, std::memory_order_acquire);
+//            continue; // retry operation
+//        }
+//        // Todo gh !value.isBehind(oldTail)
+////        if (valueCycle + 1 != tailCycle)
+//        if (!value.isBehind(oldTail))
+//        {
+//            // valueCycle is different and m_tail not ahead by one cycle, hence oldTail is stale
+//            continue; // retry operation
+//        }
+//
+//        // we only insert a new value if m_tail is ahead by one cycle
+//
+//        // technically this can overwrite a value that was not yet dequeued, but in our use case
+//        // this will not happen since we transfer indices back and forth from 2 identically
+//        // sized queues containing only capacity (= length of a cycle) m_values in total
+//
+//        Index newValue(index, tailCycle);
+//        // todo gh: tryToPublishAt(position, newValue),
+//        if (m_values[position].compare_exchange_strong(
+//                value, newValue, std::memory_order_acq_rel, std::memory_order_acquire))
+//        {
+//            break; // push successful
+//        }
+//
+//    } while (true); // we leave iff the CAS was successful
+//
+//    // try moving the m_tail, if it fails it is no problem, another push has to help this operation
+//    // before it can succeed itself
+//    // todo gh moveTailByOne(oldTail)
+//    m_tail.compare_exchange_strong(oldTail, oldTail + 1, std::memory_order_relaxed, std::memory_order_relaxed);
+//}
+
+
 template<uint64_t Capacity>
 typename IndexQueue<Capacity>::Index
 IndexQueue<Capacity>::loadNextReadPosition(){
-	return m_head.load(std::memory_order_relaxed);
-//	return m_head.load(std::memory_order_acquire);
+	return m_head.load(std::memory_order_acquire);
+//	return m_head.load(std::memory_order_relaxed);
 }
 template<uint64_t Capacity>
 typename IndexQueue<Capacity>::Index
 IndexQueue<Capacity>::loadNextWritePosition(){
-	return m_tail.load(std::memory_order_relaxed);
-//	return m_tail.load(std::memory_order_acquire);
+	return m_tail.load(std::memory_order_acquire);
+//	return m_tail.load(std::memory_order_relaxed);
 }
 template<uint64_t Capacity>
 typename IndexQueue<Capacity>::Index
 IndexQueue<Capacity>::loadValueAt(typename IndexQueue<Capacity>::Index position){
-	return m_values[position.getIndex()].load(std::memory_order_relaxed);
-//	return m_values[position.getIndex()].load(std::memory_order_acquire);
+//	return m_values[position.getIndex()].load(std::memory_order_relaxed);
+	return m_values[position.getIndex()].load(std::memory_order_acquire);
 }
 template<uint64_t Capacity>
 bool
@@ -78,15 +131,14 @@ IndexQueue<Capacity>::tryToPublishAt(
 	return m_values[writePosition.getIndex()].
 			compare_exchange_strong(
 				oldValue, newValue,
-				std::memory_order_relaxed,
-				std::memory_order_relaxed
-//				std::memory_order_release,
-//				std::memory_order_acquire
-				);
+//				std::memory_order_relaxed,
+				std::memory_order_release,
+				std::memory_order_acquire);
+//				std::memory_order_relaxed);
 }
 template<uint64_t Capacity>
-typename IndexQueue<Capacity>::Index
-IndexQueue<Capacity>::updateNextWritePosition(Index oldWritePosition){
+void
+IndexQueue<Capacity>::updateNextWritePosition(Index& oldWritePosition){
 	// compare_exchange updates oldWritePosition
 	// if not succeed
 	// else oldWritePosition stays unchanged
@@ -94,15 +146,13 @@ IndexQueue<Capacity>::updateNextWritePosition(Index oldWritePosition){
 	Index newWritePosition(oldWritePosition+1);
 	auto succeed = m_tail.compare_exchange_strong(
 				oldWritePosition, newWritePosition,
-				std::memory_order_relaxed,
-				std::memory_order_relaxed
-//				std::memory_order_release,
-//				std::memory_order_acquire
-				);
+//				std::memory_order_relaxed,
+				std::memory_order_release,
+				std::memory_order_acquire);
+//				std::memory_order_relaxed);
 	if(succeed){
 		oldWritePosition = newWritePosition;
 	}
-	return oldWritePosition; // updated
 }
 template<uint64_t Capacity>
 bool
@@ -114,20 +164,19 @@ IndexQueue<Capacity>::tryToAchieveOwnership(Index& oldReadPosition){
 			std::memory_order_relaxed);
 }
 
+//template<uint64_t Capacity>
+//template<class MonitoringPolicy>
+//void
+//IndexQueue<Capacity>::demoMonitoringPolicy(MonitoringPolicy const& policy){
+//	policy.print();
+//}
+
+
 //void IndexQueue<Capacity>::push(indexvalue_t identity)
 template<uint64_t Capacity>
 template<class MonitoringPolicy>
-void IndexQueue<Capacity>::push(UniqueIndexType uniqueIdx, MonitoringPolicy const& policy)
+void IndexQueue<Capacity>::push(UniqueIndexType identity, MonitoringPolicy const& policy)
 {
-	// to consider:
-	// all statements of this algorithm can be relaxed!
-	// they can not be reordered, because of
-	// data dependencies between the statements
-	// loadNextWritePosition->loadValueAt->newValue->tryToPublishAt->updateNextWritePosition
-	// reordering would violate the "as if rule"
-	// see: en.cppreference.com/w/cpp/language/as_if
-	// only checkPoints could be reordered,
-	// but this would only make the test fail
 	bool notPublished = true;
     auto writePosition = loadNextWritePosition();
     do
@@ -140,7 +189,7 @@ void IndexQueue<Capacity>::push(UniqueIndexType uniqueIdx, MonitoringPolicy cons
         auto isFree = [&](){ return oldValue.isBehind(writePosition);};
 
         if(isFree()){
-        	Index newValue(uniqueIdx, writePosition.getCycle() );
+        	Index newValue(identity, writePosition.getCycle() );
         	//if publish fails, another thread has published before
         	auto succeed = tryToPublishAt(writePosition, oldValue, newValue);
         	if(succeed){
@@ -149,26 +198,22 @@ void IndexQueue<Capacity>::push(UniqueIndexType uniqueIdx, MonitoringPolicy cons
         }
 		// try to help moving the nextWritePosition,
         // can fail but we retry anyway and some enqueuer will succeed
-        writePosition = updateNextWritePosition(writePosition);
+        updateNextWritePosition(writePosition);
 
     }while(notPublished);
 
     policy.checkPoint(BeforeUpdatePosition);
     updateNextWritePosition(writePosition);
-    policy.checkPoint(EndOfMethod);
 }
 
 template<uint64_t Capacity>
-template<class MonitoringPolicy>
-bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy const& policy)
+bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx)
 {
     Index value;
     do
     {
     	auto readPosition = loadNextReadPosition();
-    	policy.checkPoint(AfterLoadPosition);
         value = loadValueAt(readPosition);
-    	policy.checkPoint(AfterLoadValue);
 
         // we only dequeue if value and readPosition is in the same cycle
         auto isUpToDate = [&](){ return readPosition.getCycle() == value.getCycle();};
@@ -188,39 +233,43 @@ bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy cons
     } while (true); // we leave if we achieve Ownership of readPosition
 
     uniqueIdx = UniqueIndexType(value.getIndex()); // implicit move()
-    policy.checkPoint(EndOfMethod);
     return true;
 }
+//template<uint64_t Capacity>
+//bool IndexQueue<Capacity>::pop(indexvalue_t& index)
+//{
+//    Index value;
+//    do
+//    {
+////    	auto oldHead = this->loadHead();
+//    	auto oldHead = m_head.load(std::memory_order_acquire);
+////        value = loadValueAt(oldHead.getIndex());
+//        value = m_values[oldHead.getIndex()].load(std::memory_order_relaxed); // (value load)
+//        auto headCycle = oldHead.getCycle();
+//        auto valueCycle = value.getCycle();
+//        //
+//        if (valueCycle != headCycle)
+//        {
+//            if (valueCycle + 1 == headCycle)
+//            {
+//                return false; // m_head is ahead by one cycle, queue was empty at (value load)
+//            }
+//            continue; // oldHead is stale, retry operation
+//        }
+//
+//        // we only dequeue if the cycle of value and of m_head is the same
+//
+//        if (m_head.compare_exchange_strong(oldHead, oldHead + 1, std::memory_order_acq_rel, std::memory_order_acquire))
+//        {
+//            break; // pop successful
+//        }
+//
+//    } while (true); // we leave iff the CAS was successful
+//
+//    index = indexvalue_t(value.getIndex());
+//    return true;
+//}
 
-/**
- * popIfFull: not waitfree, starvation may occur in the surrounding Queue,
- * in the following rare cases,
- * P_SUT may wait forever,
- * P_SUT (System Under Test) is the process to be considered
- * The possibility depends on the relationship between the number of
- * elements, the number of threads/processes and the degree of
- * filling
- * number of Elements == 4 in the surrounding queue
- * freeIdx == [3]
- * usedIdx == [0, 1, 2]
- * Px push ownership 3, freeIdx == [empty]
- * P_SUT push
- * 	freeIdx.pop -> false
- * 	usedIdx.popIfFull -> false
- * Px transfer ownership usedIdx == [0, 1, 2, 3]
- * Py pop 0 ... usedIdx == [1, 2, 3]
- * P_SUT
- * 	freeIdx.pop -> false
- * 	useIdx.popIfFull -> false
- * Py
- * 	transfer ownership freeIdx == [0]
- * Pz
- * 	push ownership 0, freeIdx == [empty]
- * P_SUT
- * 	freeIdx.pop -> false
- * 	usedIdx.popIfFull -> false
- * Pz etc
- */
 template<uint64_t Capacity>
 bool IndexQueue<Capacity>::popIfFull(UniqueIndexType& index)
 {

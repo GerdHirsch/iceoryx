@@ -107,10 +107,16 @@ void demoEquivalenceclassC(){ // test thread is interrupted
 	thread SUTThread(SUTpush);
 	SUTPolicy.waitForArrival(checkPoint);
 
+	cout << endl << "after sut checkpoint " << endl;
+	queue.print();
+
 	cout << "testThread(testPush)" << endl;
 	TestPolicy.lock(testCheckPoint);
 	thread testThread(testPush);
 	TestPolicy.waitForArrival(testCheckPoint);
+
+	cout << endl << "after test checkpoint " << endl;
+	queue.print();
 
 	cout << "SUTPolicy.unlock()" << endl;
 	SUTPolicy.unlock();
@@ -119,6 +125,9 @@ void demoEquivalenceclassC(){ // test thread is interrupted
 	cout << "TestPolicy.unlock()" << endl;
 	TestPolicy.unlock();
 	testThread.join();
+
+	cout << endl << "after thread join " << endl;
+	queue.print();
 
 	while(queue.pop(idx)){
 		cout << "idx: " << idx << endl;

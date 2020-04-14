@@ -19,55 +19,41 @@
 #include "empty_monitoring_policy.hpp"
 
 #include <atomic>
-#include <iostream>
 
 namespace iox
 {
-
 /// @brief lockfree queue capable of storing indices 0,1,... Capacity-1
-/// @SynchronizationPolicy threadsafe, waitfree, memory neutral,
-/// all members are atomic<CyclicIndex>
-/// all atomic operations (load, compare_exchange_strong) are relaxed
-template <uint64_t Capacity_>
+template <uint64_t Capacity>
 class IndexQueue
 {
   public:
-
     using NativeType = uint64_t;
-	static constexpr NativeType CAPACITY{Capacity_};
+    static constexpr NativeType CAPACITY{Capacity};
 
     using UniqueIndexType = UniqueIndex<NativeType, CAPACITY>;
-//    using indexvalue_t = word_t;
+    using indexvalue_t = UniqueIndexType;
+
     void print();
-//    template<class MonitoringPolicy=EmptyMonitoringPolicy>
-//    void demoMonitoringPolicy(MonitoringPolicy const& policy=MonitoringPolicy());
 
-//    template<class MonitoringPolicy=EmptyMonitoringPolicy>
-//    void demoMonitoringPolicy(MonitoringPolicy const& policy=MonitoringPolicy()){
-//    	policy.print();
-//    }
   private:
-    using Index = CyclicIndex<CAPACITY>;
-
-    Index loadNextReadPosition();
-    Index loadNextWritePosition();
-    Index loadValueAt(Index position);
-    bool tryToPublishAt(Index writePosition, Index& oldValue, Index newValue);
-    bool tryToAchieveOwnership(Index& readPosition); // head
-    Index updateNextWritePosition(Index oldWritePosition);// tail
-//    bool isUsed(NativeType valueCycle, NativeType tailCycle);
+    using Index = CyclicIndex<Capacity>;
     // @todo: a compile time check whether atomic<Index> is actually lock free would be nice (is there a solution with
     // c++11?)
     // inner call is not constexpr so we cannot do compile time check here ...
     // static_assert(std::atomic<Index>{}.is_lock_free());
 
-    std::atomic<Index> m_values[CAPACITY];
-    std::atomic<Index> m_head; // read
-    std::atomic<Index> m_tail; // write
+    std::atomic<Index> m_values[Capacity];
+    std::atomic<Index> m_head;
+    std::atomic<Index> m_tail;
 
   public:
+    IndexQueue(const IndexQueue&) = delete;
+    IndexQueue(IndexQueue&&) = delete;
+    IndexQueue& operator=(const IndexQueue&) = delete;
+    IndexQueue& operator=(IndexQueue&&) = delete;
     // checkPoints for test instrumentation
     enum {AfterLoadPosition=1, AfterLoadValue=2, BeforeUpdatePosition=4, EndOfMethod };
+
     // just to distingish between constructors at compile time and make the
     // construction policy more explicit
     enum class ConstructFull
@@ -89,29 +75,27 @@ class IndexQueue
     /// @brief get the capacity of the IndexQueue
     /// @return capacity of the IndexQueue
     /// threadsafe, lockfree
-    constexpr NativeType capacity();
+    constexpr uint64_t capacity();
 
     /// @brief push index into the queue in FIFO order
     /// constraint: pushing more indices than capacity is not allowed
     /// constraint: only indices in the range [0, Capacity-1] are allowed
     /// threadsafe, lockfree
+//    void push(indexvalue_t index);
     template<class MonitoringPolicy=EmptyMonitoringPolicy>
-    void push(UniqueIndexType uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
+    void push(indexvalue_t uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
 
     /// @brief tries to remove index in FIFO order
     /// @return true iff removal was successful (i.e. queue was not empty)
     /// value is only valid if the function returns true
     /// threadsafe, lockfree
-    template<class MonitoringPolicy=EmptyMonitoringPolicy>
-    bool pop(UniqueIndexType& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
-
+    bool pop(indexvalue_t& index);
 
     /// @brief tries to remove index in FIFO order iff the queue is full
     /// @return true iff removal was successful (i.e. queue was full)
     /// value is only valid if the function returns true
-    /// @SynchronizationPolicy threadsafe, waitfree, memory neutral,
-    /// all members are atomic<CyclicIndex>
-    bool popIfFull(UniqueIndexType& uniqueIdx);
+    /// threadsafe, lockfree
+    bool popIfFull(indexvalue_t& index);
 
     /// @brief check whether the queue is empty
     /// @return true iff the queue is empty

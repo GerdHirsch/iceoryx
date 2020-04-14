@@ -16,9 +16,11 @@
 
 // tests & TestParameter
 template<class SUT>
-using ParameterPositionClassB = TestParameter<SUT::AfterLoadPosition, 0>;
+using ParameterRunToCompletion = TestParameter<0, 0>;
 template<class SUT>
-using ParameterValueClassB = TestParameter<SUT::AfterLoadValue, 0>;
+using ParameterPositionClassB = TestParameter<SUT::AfterLoadPosition, SUT::EndOfMethod>;
+template<class SUT>
+using ParameterValueClassB = TestParameter<SUT::AfterLoadValue, SUT::EndOfMethod>;
 template<class SUT>
 using ParameterPositionClassC = TestParameter<SUT::AfterLoadPosition, SUT::BeforeUpdatePosition>;
 template<class SUT>
@@ -26,13 +28,15 @@ using ParameterValueClassC = TestParameter<SUT::AfterLoadValue, SUT::BeforeUpdat
 
 // tests for equivalence classes B and C
 // IQTest IndexQueueTest Position/Value Class B/C
-template<class SUT> // SRBM = SkippyRingBufferMultithreaded
+template<class SUT>
+using IQTestRunToCompletion = IndexQueueTestMultithreaded<SUT, ParameterRunToCompletion<SUT>>;
+template<class SUT>
 using IQTestPositionClassB = IndexQueueTestMultithreaded<SUT, ParameterPositionClassB<SUT>>;
-template<class SUT> // SRBM = SkippyRingBufferMultithreaded
+template<class SUT>
 using IQTestValueClassB = IndexQueueTestMultithreaded<SUT, ParameterValueClassB<SUT>>;
-template<class SUT> // SRBM = SkippyRingBufferMultithreaded
+template<class SUT>
 using IQTestPositionClassC = IndexQueueTestMultithreaded<SUT, ParameterPositionClassC<SUT>>;
-template<class SUT> // SRBM = SkippyRingBufferMultithreaded
+template<class SUT>
 using IQTestValueClassC = IndexQueueTestMultithreaded<SUT, ParameterValueClassC<SUT>>;
 //==============================================
 template<std::size_t MAX>
@@ -49,6 +53,8 @@ void testIndexQueueMultiThreaded(int argc, char const *argv[]) {
 	// test thread runs to completion
 	// SUT thread runs to completion
 	//============================================
+//	cute::makeRunner(listener,argc,argv)(IQTestRunToCompletion<Queue<3>>::make_suite(), "class B Position IndexQueue");
+
 //	cute::makeRunner(listener,argc,argv)(IQTestPositionClassB<Queue<1>>::make_suite(), "class B IndexQueue");
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassB<Queue<2>>::make_suite(), "class B Position IndexQueue");
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassB<Queue<3>>::make_suite(), "class B Position IndexQueue");
@@ -72,7 +78,7 @@ void testIndexQueueMultiThreaded(int argc, char const *argv[]) {
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<3>>::make_suite(), "class C Position IndexQueue");
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<5>>::make_suite(), "class C Position IndexQueue");
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<10>>::make_suite(), "class C Position IndexQueue");
-//	//============================================
+	//============================================
 //	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<1>>::make_suite(), "class C IndexQueue");
 	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<2>>::make_suite(), "class C Value IndexQueue");
 	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<3>>::make_suite(), "class C Value IndexQueue");

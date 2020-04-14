@@ -54,7 +54,7 @@ class IndexQueue
     Index loadValueAt(Index position);
     bool tryToPublishAt(Index writePosition, Index& oldValue, Index newValue);
     bool tryToAchieveOwnership(Index& readPosition); // head
-    Index updateNextWritePosition(Index oldWritePosition);// tail
+    void updateNextWritePosition(Index& oldWritePosition);// tail
 //    bool isUsed(NativeType valueCycle, NativeType tailCycle);
     // @todo: a compile time check whether atomic<Index> is actually lock free would be nice (is there a solution with
     // c++11?)
@@ -67,7 +67,7 @@ class IndexQueue
 
   public:
     // checkPoints for test instrumentation
-    enum {AfterLoadPosition=1, AfterLoadValue=2, BeforeUpdatePosition=4, EndOfMethod };
+    enum {AfterLoadPosition=1, AfterLoadValue=2, BeforeUpdatePosition=4 };
     // just to distingish between constructors at compile time and make the
     // construction policy more explicit
     enum class ConstructFull
@@ -102,8 +102,7 @@ class IndexQueue
     /// @return true iff removal was successful (i.e. queue was not empty)
     /// value is only valid if the function returns true
     /// threadsafe, lockfree
-    template<class MonitoringPolicy=EmptyMonitoringPolicy>
-    bool pop(UniqueIndexType& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
+    bool pop(UniqueIndexType& uniqueIdx);
 
 
     /// @brief tries to remove index in FIFO order iff the queue is full

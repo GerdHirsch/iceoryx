@@ -19,6 +19,7 @@
 #include "empty_monitoring_policy.hpp"
 
 #include <atomic>
+#include <thread>
 #include <iostream>
 
 namespace iox
@@ -39,6 +40,7 @@ class IndexQueue
     using UniqueIndexType = UniqueIndex<NativeType, CAPACITY>;
 //    using indexvalue_t = word_t;
     void print() const;
+    void printThreadInfo(const char* message)const;
 //    template<class MonitoringPolicy=EmptyMonitoringPolicy>
 //    void demoMonitoringPolicy(MonitoringPolicy const& policy=MonitoringPolicy());
 

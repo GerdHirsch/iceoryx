@@ -6,18 +6,14 @@
  */
 
 #include "../include/iox/index_queue.hpp"
+#include "../include/iox/index_queue_mk.hpp"
 #include "../include/iox/unique_index.hpp"
 #include "../include/iox/gated_monitoring_policy.hpp"
 
 #include <iostream>
 
 using namespace std;
-class MyPolicy{
-public:
-	void print()const{
-		cout << "MyPolicy" << endl;
-	}
-};
+
 void demoIndexQueue(){
 	cout << "demoIndexQueue" << endl;
 

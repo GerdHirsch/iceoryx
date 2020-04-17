@@ -16,10 +16,10 @@ namespace iox{
 
 class Gate{
 public:
-	static constexpr std::memory_order storeOrder = std::memory_order_relaxed;
-	static constexpr std::memory_order loadOrder = std::memory_order_relaxed;
-//	static constexpr std::memory_order storeOrder = std::memory_order_release;
-//	static constexpr std::memory_order loadOrder = std::memory_order_acquire;
+//	static constexpr std::memory_order storeOrder = std::memory_order_relaxed;
+//	static constexpr std::memory_order loadOrder = std::memory_order_relaxed;
+	static constexpr std::memory_order storeOrder = std::memory_order_release;
+	static constexpr std::memory_order loadOrder = std::memory_order_acquire;
 	/** all doors are open*/
 	Gate() : gate(0){}
 	/** opens all doors */

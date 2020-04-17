@@ -34,7 +34,7 @@ class IndexQueue
     using UniqueIndexType = UniqueIndex<NativeType, CAPACITY>;
     using indexvalue_t = UniqueIndexType;
 
-    void print();
+    void print()const;
 
   private:
     using Index = CyclicIndex<Capacity>;

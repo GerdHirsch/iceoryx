@@ -4,7 +4,7 @@ namespace iox
 namespace mk{
 template<uint64_t Capacity>
 void
-IndexQueue<Capacity>::print()
+IndexQueue<Capacity>::print() const
 {
 	using namespace std;
 	cout << endl << "IndexQueue::print()" << endl;
@@ -115,8 +115,10 @@ bool IndexQueue<Capacity>::pop(indexvalue_t& uniqueIdx, MonitoringPolicy const& 
     {
         auto oldHead = m_head.load(std::memory_order_acquire);
         policy.checkPoint(AfterLoadPosition);
+
         value = m_values[oldHead.getIndex()].load(std::memory_order_relaxed); // (value load)
         policy.checkPoint(AfterLoadValue);
+
         auto headCycle = oldHead.getCycle();
         auto valueCycle = value.getCycle();
 

@@ -4,6 +4,15 @@ namespace iox
 
 template<uint64_t Capacity>
 void
+IndexQueue<Capacity>::printThreadInfo(const char* message) const
+{
+	return;// switch on/off output
+
+	using namespace std;
+	cout << endl << "IndexQueue: " << this_thread::get_id() << " " << message << endl;
+}
+template<uint64_t Capacity>
+void
 IndexQueue<Capacity>::print() const
 {
 	//return;// switch on/off output
@@ -178,12 +187,18 @@ template<class MonitoringPolicy>
 bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy const& policy)
 {
     Index value;
+    bool notEmpty=true;
     do
     {
     	auto readPosition = loadNextReadPosition();
+
+    	printThreadInfo("before CP AfterLoadPosition");
     	policy.checkPoint(AfterLoadPosition);
-        value = loadValueAt(readPosition);
-    	policy.checkPoint(AfterLoadValue);
+
+    	value = loadValueAt(readPosition);
+
+        printThreadInfo("before CP AfterLoadValue");
+        policy.checkPoint(AfterLoadValue);
 
         // we only dequeue if value and readPosition is in the same cycle
         auto isUpToDate = [&](){ return readPosition.getCycle() == value.getCycle();};
@@ -191,20 +206,30 @@ bool IndexQueue<Capacity>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy cons
         auto isEmpty = [&](){ return value.isBehind(readPosition);};
 
         if(isUpToDate()){
+			printThreadInfo("isUpToDate");
         	auto ownershipAchieved = tryToAchieveOwnership(readPosition);
 			if (ownershipAchieved)
 			{
+				printThreadInfo("ownershipAchieved");
 				break; // pop successful
 			}
         }else if (isEmpty()){
-			return false;
+			printThreadInfo("isEmpty");
+			notEmpty = false;
+			// todo: in some cases, thread will not return with the return false; statement!!!
+//			return false;
 		}// else readPosition is stale, retry operation
 
-    } while (true); // we leave if we achieve Ownership of readPosition
+    } while (notEmpty); // we leave if we achieve Ownership of readPosition
 
-    uniqueIdx = UniqueIndexType(value.getIndex()); // implicit move()
+    if(notEmpty){
+		uniqueIdx = UniqueIndexType(value.getIndex()); // implicit move()
+    }
+
+    printThreadInfo("before CP EndOfMethod");
     policy.checkPoint(EndOfMethod);
-    return true;
+	printThreadInfo("before return");
+    return notEmpty;
 }
 
 /**

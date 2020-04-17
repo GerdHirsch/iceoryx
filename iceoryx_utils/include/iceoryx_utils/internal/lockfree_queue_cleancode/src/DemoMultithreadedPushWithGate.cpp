@@ -34,7 +34,8 @@ void demoEquivalenceclassA(){ //NoConcurrencyPush
 }
 void demoEquivalenceclassB(){ // test thread is not interrupted
 	cout << endl << "===== demoEquivalenceclassB" << endl;
-	iox::GatedMonitoringPolicy SUTPolicy;
+	using Policy = iox::GatedMonitoringPolicy<>;
+	Policy SUTPolicy;
 
 	constexpr size_t Capacity{4};
 	using Queue = iox::IndexQueue<Capacity>;
@@ -75,8 +76,9 @@ void demoEquivalenceclassB(){ // test thread is not interrupted
 }
 void demoEquivalenceclassC(){ // test thread is interrupted
 	cout << endl << "===== demoEquivalenceclassC" << endl;
-	iox::GatedMonitoringPolicy SUTPolicy;
-	iox::GatedMonitoringPolicy TestPolicy;
+	using Policy = iox::GatedMonitoringPolicy<>;
+	Policy SUTPolicy;
+	Policy TestPolicy;
 
 	constexpr size_t Capacity{4};
 	using Queue = iox::IndexQueue<Capacity>;

@@ -7,10 +7,11 @@
 
 #include "../include/iox/gated_monitoring_policy.hpp"
 #include "../include/iox/index_queue.hpp"
-#include "../include/iox/index_queue_mk.hpp"
+#include "../include/iox/mk/index_queue_mk_old.hpp"
 
 #include <iostream>
 #include <thread>
+
 using namespace std;
 
 	constexpr size_t Capacity{3};

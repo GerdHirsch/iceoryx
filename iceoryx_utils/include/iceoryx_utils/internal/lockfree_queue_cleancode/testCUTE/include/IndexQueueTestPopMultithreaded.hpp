@@ -70,6 +70,7 @@ template<class SUTType, class Params>
 inline
 void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 	SUT source(SUT::ConstructFull::Policy);
+//	SUT source(SUT::ConstructFull);
 	SUT sut;
 	Policy sutPolicy;
 	Policy testPolicy;

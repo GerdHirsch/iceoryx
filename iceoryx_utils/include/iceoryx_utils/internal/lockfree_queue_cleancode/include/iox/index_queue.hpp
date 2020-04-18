@@ -29,12 +29,12 @@ namespace iox
 /// @SynchronizationPolicy threadsafe, waitfree, memory neutral,
 /// all members are atomic<CyclicIndex>
 /// all atomic operations (load, compare_exchange_strong) are relaxed
-template <uint64_t Capacity_>
+template <uint64_t Capacity_, class NativeType_ = uint64_t>
 class IndexQueue
 {
   public:
 
-    using NativeType = uint64_t;
+    using NativeType = NativeType_;
 	static constexpr NativeType CAPACITY{Capacity_};
 
     using UniqueIndexType = UniqueIndex<NativeType, CAPACITY>;

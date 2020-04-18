@@ -41,9 +41,6 @@ public:
 	// equivalence class B & C
 	void pushToEmptyQueue();
 	void pushToFilledQueue();
-
-//	void popFromEmptyWhilePush();
-//	void popFromFilledWhilePop();
 	//=========================
 	// setup
 	//=========================
@@ -58,8 +55,6 @@ public:
 		cute::suite s { };
 		s.push_back(CUTE_SMEMFUN(DerivedTest, pushToEmptyQueue));
 		s.push_back(CUTE_SMEMFUN(DerivedTest, pushToFilledQueue));
-//		s.push_back(CUTE_SMEMFUN(DerivedTest, popFromEmptyWhilePush));
-//		s.push_back(CUTE_SMEMFUN(DerivedTest, popFromFilledWhilePop));
 		return s;
 	}
 };

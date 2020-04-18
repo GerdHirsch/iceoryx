@@ -15,7 +15,7 @@ class UniqueIndex{
 public:
 	using NativeType = NativeType_;
 	static constexpr NativeType CAPACITY = Capacity_;
-	using this_type = UniqueIndex<NativeType_, CAPACITY>;
+	using this_type = UniqueIndex<NativeType, CAPACITY>;
 	UniqueIndex():m_index(0){} // todo create invalid UniqueIndex
 	explicit UniqueIndex(NativeType index):m_index(index){}
 	// copy

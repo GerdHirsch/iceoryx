@@ -8,8 +8,7 @@
 #include "../include/IndexQueueTestPushMultithreaded.hpp"
 //tests
 #include <iox/index_queue.hpp>
-#include <iox/index_queue_mk.hpp>
-//CUTE
+#include <iox/mk/index_queue_mk_old.hpp>
 #include "cute.h"
 #include "ide_listener.h"
 #include "xml_listener.h"

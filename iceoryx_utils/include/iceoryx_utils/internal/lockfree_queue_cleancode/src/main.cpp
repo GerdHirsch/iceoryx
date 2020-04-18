@@ -15,16 +15,19 @@ void demoIdentity();
 void demoEmbeddedInts();
 void demoMultithreadedPushWithGate();
 void demoEndlessloopInPop();
+void demoMKIndexQueue();
 
 int main(){
 	cout << "KillatQueue" << endl;
 
 //	demoCyclicIndexOverflow();
 //	demoIndexQueue();
-	demoEndlessloopInPop();
+//	demoEndlessloopInPop();
 //	demoEmbeddedInts();
 //	demoIdentity();
 //	demoMultithreadedPushWithGate();
+
+	demoMKIndexQueue();
 }
 
 

@@ -191,13 +191,9 @@ bool IndexQueue<Capacity, NativeType>::pop(UniqueIndexType& uniqueIdx, Monitorin
     do
     {
     	auto readPosition = loadNextReadPosition();
-
-    	printThreadInfo("before CP AfterLoadPosition");
     	policy.checkPoint(AfterLoadPosition);
 
     	value = loadValueAt(readPosition);
-
-        printThreadInfo("before CP AfterLoadValue");
         policy.checkPoint(AfterLoadValue);
 
         // we only dequeue if value and readPosition is in the same cycle
@@ -206,22 +202,18 @@ bool IndexQueue<Capacity, NativeType>::pop(UniqueIndexType& uniqueIdx, Monitorin
         auto isEmpty = [&](){ return value.isBehind(readPosition);};
 
         if(isUpToDate()){
-			printThreadInfo("isUpToDate");
         	auto ownershipAchieved = tryToAchieveOwnership(readPosition);
 			if (ownershipAchieved)
 			{
-				printThreadInfo("ownershipAchieved");
 				uniqueIdx = UniqueIndexType(value.getIndex()); // implicit move()
 				break; // pop successful
 			}
         }else if (isEmpty()){
-			printThreadInfo("isEmpty");
 			notEmpty = false;
 		}// else readPosition is stale, retry operation
 
     } while (notEmpty); // we leave if we achieve Ownership of readPosition
 
-    printThreadInfo("before CP EndOfMethod");
     policy.checkPoint(EndOfMethod);
     return notEmpty;
 }

@@ -101,7 +101,7 @@ bool IndexQueue<Capacity, NativeType>::pop(value_type& uniqueIdx, MonitoringPoli
         	auto ownershipAchieved = tryToAchieveOwnershipAt(readPosition);
 			if (ownershipAchieved)
 			{
-				uniqueIdx = UniqueIndexType(value.getIndex()); // implicit move()
+				uniqueIdx = value_type(value.getIndex()); // implicit move()
 				break; // pop successful
 			}
         }else if (isEmpty()){

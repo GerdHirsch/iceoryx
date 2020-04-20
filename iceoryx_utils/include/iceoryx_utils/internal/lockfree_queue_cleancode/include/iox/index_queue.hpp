@@ -38,8 +38,7 @@ class IndexQueue
     using NativeType = NativeType_;
 	static constexpr NativeType CAPACITY{Capacity_};
 
-    using UniqueIndexType = UniqueIndex<NativeType, CAPACITY>;
-    using value_type = UniqueIndexType; // for standard conformity
+    using value_type = UniqueIndex<NativeType, CAPACITY>;// for standard conformity
 
     // just to distingish between constructors at compile time and make the
     // construction policy more explicit

@@ -22,7 +22,7 @@ template<class SUTType, class Parameter>
 class IndexQueueTestPushMultithreaded{
 public:
 	using SUT  = SUTType;
-	using UniqueIdx = typename SUT::UniqueIndexType;
+	using UniqueIdx = typename SUT::value_type;
 	using NativeType = typename SUT::NativeType;
 	static constexpr auto CAPACITY = SUT::CAPACITY;
 

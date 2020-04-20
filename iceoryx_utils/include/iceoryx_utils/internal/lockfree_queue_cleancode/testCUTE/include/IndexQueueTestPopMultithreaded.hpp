@@ -22,7 +22,7 @@ template<class SUTType, class Parameter>
 class IndexQueueTestPopMultithreaded{
 public:
 	using SUT  = SUTType;
-	using UniqueIdx = typename SUT::UniqueIndexType;
+	using UniqueIdx = typename SUT::value_type;
 	using NativeType = typename SUT::NativeType;
 	static constexpr auto CAPACITY = SUT::CAPACITY;
 
@@ -89,7 +89,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 	// pop will fail, queue seems to be empty
 
 	//if(sutCheckpoint == SUT::AfterLoadPosition)
-	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	// ::max() is needed cause there is no invalid state of UniqueIndexType/value_type
 	UniqueIdx idxSUTToPop{std::numeric_limits<NativeType>::max()};
 	NativeType expectedPopValueSUT{0};
 	bool expectedPopReturnValue{true};
@@ -157,7 +157,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromFilledWhilePop(){
 	Policy sutPolicy;
 	Policy testPolicy;
 
-	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	// ::max() is needed cause there is no invalid state of UniqueIndexType/value_type
 	UniqueIdx idxSutToPop{std::numeric_limits<NativeType>::max()};
 	constexpr NativeType expectedSUTPopValue{1};
 	bool popSUTReturnValue{false};
@@ -222,7 +222,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyAfterFull_No_1
 	Policy sutPolicy;
 	Policy testPolicy;
 
-	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	// ::max() is needed cause there is no invalid state of UniqueIndexType/value_type
 	constexpr NativeType expectedSUTPopValue{std::numeric_limits<NativeType>::max()};
 	UniqueIdx idxSutToPop{expectedSUTPopValue};
 	bool popSUTReturnValue{true};
@@ -288,7 +288,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyAfterFull_No_2
 	Policy sutPolicy;
 	Policy testPolicy;
 
-	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	// ::max() is needed cause there is no invalid state of UniqueIndexType/value_type
 	constexpr NativeType expectedSUTPopValue{std::numeric_limits<NativeType>::max()};
 	UniqueIdx idxSutToPop{expectedSUTPopValue};
 	bool popSUTReturnValue{true};
@@ -348,7 +348,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledBeforeP
 	SUT sut(SUT::ConstructFull);
 	Policy sutPolicy;
 
-	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	// ::max() is needed cause there is no invalid state of UniqueIndexType/value_type
 	UniqueIdx idxSutToPop{std::numeric_limits<NativeType>::max()};
 	constexpr NativeType expectedSUTPopValue{1};
 	bool popSUTReturnValue{false};
@@ -389,7 +389,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledAfterPo
 	Policy testPolicy;
 
 	//------------------------------------
-	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	// ::max() is needed cause there is no invalid state of UniqueIndexType/value_type
 	constexpr NativeType expectedSUTPopValue{std::numeric_limits<NativeType>::max()};
 	UniqueIdx idxSutToPop{expectedSUTPopValue}; // should not be changed
 	constexpr bool expectedSUTPopReturnValue{false};

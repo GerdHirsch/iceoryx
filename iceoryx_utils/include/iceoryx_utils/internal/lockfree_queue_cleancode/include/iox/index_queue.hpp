@@ -78,7 +78,8 @@ class IndexQueue
     /// value is only valid if the function returns true
     /// @SynchronizationPolicy threadsafe, waitfree, memory neutral,
     /// all members are atomic<CyclicIndex>
-    bool popIfFull(UniqueIndexType& uniqueIdx);
+    template<class MonitoringPolicy=EmptyMonitoringPolicy>
+    bool popIfFull(UniqueIndexType& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
 
     /// @brief get the capacity of the IndexQueue
    /// @return capacity of the IndexQueue

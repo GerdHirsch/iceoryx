@@ -249,22 +249,30 @@ bool IndexQueue<Capacity, NativeType>::pop(UniqueIndexType& uniqueIdx, Monitorin
  * and freeIdx == [empty]
  */
 template<uint64_t Capacity, class NativeType>
-bool IndexQueue<Capacity, NativeType>::popIfFull(UniqueIndexType& index)
+template<class MonitoringPolicy>
+bool IndexQueue<Capacity, NativeType>::popIfFull(UniqueIndexType& uniqueIdx, MonitoringPolicy const& policy)
 {
+
 	auto writePosition= loadNextWritePosition(); // tail
 	auto readPosition= loadNextReadPosition(); // head
+	policy.checkPoint(AfterLoadPosition);
+
 	auto value = loadValueAt(readPosition);
+	policy.checkPoint(AfterLoadValue);
+
 	auto isFull = [&](){
 		return 	writePosition.getIndex() == readPosition.getIndex() &&
 				readPosition.isBehind(writePosition);
 	};
+
 	if(isFull()){
-		auto ownershipAchieved = tryToAchieveOwnership(readPosition);
+		auto ownershipAchieved = tryToAchieveOwnershipAt(readPosition);
 		if(ownershipAchieved){
-			index = value.getIndex();
+			uniqueIdx = value_type(value.getIndex()); // implizit move
 			return true;
 		}
 	}//else someone else has popped an identity
+	policy.checkPoint(EndOfMethod);
 	return false;
 }
 //

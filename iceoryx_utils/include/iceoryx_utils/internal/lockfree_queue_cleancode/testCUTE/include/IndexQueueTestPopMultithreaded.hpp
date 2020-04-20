@@ -43,6 +43,8 @@ public:
 	void popFromFilledWhilePop();
 	void popFromEmptyAfterFull_No_1();
 	void popFromEmptyAfterFull_No_2();
+	void popIfFullFromFilledBeforePop();
+	void popIfFullFromFilledAfterPop();
 	//=========================
 	// setup
 	//=========================
@@ -59,6 +61,8 @@ public:
 		s.push_back(CUTE_SMEMFUN(DerivedTest, popFromFilledWhilePop));
 		s.push_back(CUTE_SMEMFUN(DerivedTest, popFromEmptyAfterFull_No_1));
 		s.push_back(CUTE_SMEMFUN(DerivedTest, popFromEmptyAfterFull_No_2));
+		s.push_back(CUTE_SMEMFUN(DerivedTest, popIfFullFromFilledBeforePop));
+		s.push_back(CUTE_SMEMFUN(DerivedTest, popIfFullFromFilledAfterPop));
 		return s;
 	}
 };
@@ -335,4 +339,104 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyAfterFull_No_2
 	ASSERT_EQUALM("sut popped value", expectedSUTPopValue, idxSutToPop.getIndex());
 	ASSERT_EQUALM("test pop not succeed", expectedPopReturnValue, popTestReturnValue);
 	ASSERT_EQUALM("test value", expectedTestPopValue, idxTestToPop.getIndex());
+}
+
+//---------------------------------------------------------------------
+template<class SUTType, class Params>
+inline
+void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledBeforePop(){
+	SUT sut(SUT::ConstructFull);
+	Policy sutPolicy;
+
+	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	UniqueIdx idxSutToPop{std::numeric_limits<NativeType>::max()};
+	constexpr NativeType expectedSUTPopValue{1};
+	bool popSUTReturnValue{false};
+
+	// sutTask will be interrupted
+	auto sutTask = [&](){
+		popSUTReturnValue = sut.popIfFull(idxSutToPop, sutPolicy);
+	};
+
+	constexpr bool expectedPopReturnValue{true};
+
+	{	// no assertions inside this block
+		UniqueIdx idx;
+		sut.pop(idx);
+		sut.push(std::move(idx));
+		// interrupt sut
+		sutPolicy.lock(sutCheckpoint);
+		Thread sutThread(sutTask);
+		sutPolicy.waitForArrival(sutCheckpoint);
+
+		print(sut, "sut after sutCheckpoint");
+
+		//release sut to proceed
+		sutPolicy.unlock();
+		sutThread.join();
+
+		print(sut, "sut after thread.join");
+	}
+	ASSERT_EQUALM("sut pop not succeed", expectedPopReturnValue, popSUTReturnValue);
+	ASSERT_EQUALM("sut popped value", expectedSUTPopValue, idxSutToPop.getIndex());
+}
+//---------------------------------------------------------------------
+template<class SUTType, class Params>
+inline
+void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledAfterPop(){
+	SUT sut(SUT::ConstructFull);
+	Policy sutPolicy;
+	Policy testPolicy;
+
+	//------------------------------------
+	// ::max() is needed cause there is no invalid state of UniqueIndexType
+	constexpr NativeType expectedSUTPopValue{std::numeric_limits<NativeType>::max()};
+	UniqueIdx idxSutToPop{expectedSUTPopValue}; // should not be changed
+	constexpr bool expectedSUTPopReturnValue{false};
+	bool popSUTReturnValue{true};
+	// sutTask will be interrupted
+	auto sutTask = [&](){
+		popSUTReturnValue = sut.popIfFull(idxSutToPop, sutPolicy);
+	};
+	//------------------------------------
+	constexpr NativeType expectedTestPopValue{1};
+	UniqueIdx idxTestToPop{std::numeric_limits<NativeType>::max()};
+	constexpr bool expectedTestPopReturnValue{true};
+	bool popTestReturnValue{false};
+	// test runs to EndOfMethod
+	auto testTask = [&](){
+		popTestReturnValue = sut.pop(idxTestToPop, testPolicy);
+	};
+	//------------------------------------
+
+	{	// no assertions inside this block
+		UniqueIdx idx;
+		sut.pop(idx);
+		sut.push(std::move(idx));
+		// interrupt sut
+		sutPolicy.lock(sutCheckpoint);
+		Thread sutThread(sutTask);
+		sutPolicy.waitForArrival(sutCheckpoint);
+
+		print(sut, "sut after sutCheckpoint");
+
+
+		testPolicy.lock(testCheckpoint);
+		Thread testThread(testTask);
+		testPolicy.waitForArrival(testCheckpoint);
+
+		print(sut, "sut after testCheckpoint");
+
+		//release sut to proceed
+		sutPolicy.unlock();
+		sutThread.join();
+		testPolicy.unlock();
+		testThread.join();
+
+		print(sut, "sut after thread.join");
+	}
+	ASSERT_EQUALM("sut pop succeed", expectedSUTPopReturnValue, popSUTReturnValue);
+	ASSERT_EQUALM("sut popped value", expectedSUTPopValue, idxSutToPop.getIndex());
+	ASSERT_EQUALM("sut pop not succeed", expectedTestPopReturnValue, popTestReturnValue);
+	ASSERT_EQUALM("sut popped value", expectedTestPopValue, idxTestToPop.getIndex());
 }

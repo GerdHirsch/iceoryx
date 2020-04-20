@@ -3,40 +3,6 @@ namespace iox
 {
 
 template<uint64_t Capacity, class NativeType>
-void
-IndexQueue<Capacity, NativeType>::printThreadInfo(const char* message) const
-{
-	return;// switch on/off output
-
-	using namespace std;
-	cout << endl << "IndexQueue: " << this_thread::get_id() << " " << message << endl;
-}
-template<uint64_t Capacity, class NativeType>
-void
-IndexQueue<Capacity, NativeType>::print() const
-{
-	//return;// switch on/off output
-
-	using namespace std;
-	cout << endl << "IndexQueue::print()" << endl;
-	auto rPos = loadNextReadPosition();
-	auto wPos = loadNextWritePosition();
-	cout
-	<< "rPos head[" << rPos.getCycle() << ", " << rPos.getIndex() << "]" << endl
-	<< "wPos tail[" << wPos.getCycle() << ", " << wPos.getIndex() << "]" << endl
-	;
-
-	for(NativeType i=0; i<Capacity; ++i){
-		auto idx = loadValueAt(Index(i));
-		cout
-		<< "m_values[" << i << "]: ["
-		<< idx.getCycle() << ", "
-		<< idx.getIndex() << "]"
-		<< endl
-		;
-	}
-}
-template<uint64_t Capacity, class NativeType>
 IndexQueue<Capacity, NativeType>::IndexQueue(ConstructEmpty_t)
     : m_nextReadPosition(Index(Capacity))
     , m_nextWritePosition(Index(Capacity))
@@ -53,72 +19,6 @@ IndexQueue<Capacity, NativeType>::IndexQueue(ConstructFull_t)
         m_values[i].store(Index(i));
     }
 }
-
-
-
-template<uint64_t Capacity, class NativeType>
-typename IndexQueue<Capacity, NativeType>::Index
-IndexQueue<Capacity, NativeType>::loadNextReadPosition() const{
-	return m_nextReadPosition.load(std::memory_order_relaxed);
-//	return m_nextReadPosition.load(std::memory_order_acquire);
-}
-template<uint64_t Capacity, class NativeType>
-typename IndexQueue<Capacity, NativeType>::Index
-IndexQueue<Capacity, NativeType>::loadNextWritePosition() const{
-	return m_nextWritePosition.load(std::memory_order_relaxed);
-//	return m_nextWritePosition.load(std::memory_order_acquire);
-}
-template<uint64_t Capacity, class NativeType>
-typename IndexQueue<Capacity, NativeType>::Index
-IndexQueue<Capacity, NativeType>::loadValueAt(typename IndexQueue<Capacity, NativeType>::Index position) const{
-	return m_values[position.getIndex()].load(std::memory_order_relaxed);
-//	return m_values[position.getIndex()].load(std::memory_order_acquire);
-}
-template<uint64_t Capacity, class NativeType>
-bool
-IndexQueue<Capacity, NativeType>::tryToPublishAt(
-		typename IndexQueue<Capacity, NativeType>::Index writePosition,
-		Index &oldValue,
-		Index newValue){
-	return m_values[writePosition.getIndex()].
-			compare_exchange_strong(
-				oldValue, newValue,
-				std::memory_order_relaxed,
-				std::memory_order_relaxed
-//				std::memory_order_release,
-//				std::memory_order_acquire
-				);
-}
-template<uint64_t Capacity, class NativeType>
-typename IndexQueue<Capacity, NativeType>::Index
-IndexQueue<Capacity, NativeType>::updateNextWritePosition(Index oldWritePosition){
-	// compare_exchange updates oldWritePosition
-	// if not succeed
-	// else oldWritePosition stays unchanged
-	// and will be updated in if(succeed)
-	Index newWritePosition(oldWritePosition+1);
-	auto succeed = m_nextWritePosition.compare_exchange_strong(
-				oldWritePosition, newWritePosition,
-				std::memory_order_relaxed,
-				std::memory_order_relaxed
-//				std::memory_order_release,
-//				std::memory_order_acquire
-				);
-	if(succeed){
-		oldWritePosition = newWritePosition;
-	}
-	return oldWritePosition; // updated
-}
-template<uint64_t Capacity, class NativeType>
-bool
-IndexQueue<Capacity, NativeType>::tryToAchieveOwnershipAt(Index& oldReadPosition){
-	Index newReadPosition(oldReadPosition + 1);
-	return m_nextReadPosition.compare_exchange_strong(
-			oldReadPosition, newReadPosition,
-			std::memory_order_relaxed,
-			std::memory_order_relaxed);
-}
-
 /**
  * push: not waitfree, starvation may occur in the surrounding Queue,
  * in the following rare cases, P_SUT may wait forever
@@ -276,50 +176,69 @@ bool IndexQueue<Capacity, NativeType>::popIfFull(UniqueIndexType& uniqueIdx, Mon
 	policy.checkPoint(EndOfMethod);
 	return returnValue;
 }
-//
-//template<uint64_t Capacity, class NativeType>
-//bool IndexQueue<Capacity, NativeType>::popIfFull(indexvalue_t& index)
-//{
-//    Index value;
-//    do
-//    {
-//        auto oldHead = m_nextReadPosition.load(std::memory_order_acquire);
-//        value = m_values[oldHead.getIndex()].load(std::memory_order_relaxed); // (value load)
-//        auto headCycle = oldHead.getCycle();
-//        auto valueCycle = value.getCycle();
-//
-//        if (valueCycle != headCycle)
-//        {
-//            if (valueCycle + 1 == headCycle)
-//            {
-//                return false; // m_nextReadPosition is ahead by one cycle, queue was empty at (value load)
-//            }
-//            continue; // oldHead is stale, retry operation
-//        }
-//
-//        // check whether the queue is full (can we do this without tail as with empty?)
-//        auto oldTail = m_nextWritePosition.load(std::memory_order_relaxed);
-//        if (oldTail.getIndex() == oldHead.getIndex() && oldTail.getCycle() == headCycle + 1)
-//        {
-//            // queue is full, this can only change when m_nextReadPosition changes which will be detected by CAS
-//
-//            // we only dequeue if the cycle of value and of m_nextReadPosition is the same
-//            if (m_nextReadPosition.compare_exchange_strong(
-//                    oldHead, oldHead + 1, std::memory_order_acq_rel, std::memory_order_acquire))
-//            {
-//                break; // pop successful
-//            }
-//        }
-//        else
-//        {
-//            return false; // queue is not full
-//        }
-//
-//    } while (true); // we leave iff the CAS was successful
-//
-//    index = value.getIndex();
-//    return true;
-//}
+
+template<uint64_t Capacity, class NativeType>
+typename IndexQueue<Capacity, NativeType>::Index
+IndexQueue<Capacity, NativeType>::loadNextReadPosition() const{
+	return m_nextReadPosition.load(std::memory_order_relaxed);
+//	return m_nextReadPosition.load(std::memory_order_acquire);
+}
+template<uint64_t Capacity, class NativeType>
+typename IndexQueue<Capacity, NativeType>::Index
+IndexQueue<Capacity, NativeType>::loadNextWritePosition() const{
+	return m_nextWritePosition.load(std::memory_order_relaxed);
+//	return m_nextWritePosition.load(std::memory_order_acquire);
+}
+template<uint64_t Capacity, class NativeType>
+typename IndexQueue<Capacity, NativeType>::Index
+IndexQueue<Capacity, NativeType>::loadValueAt(typename IndexQueue<Capacity, NativeType>::Index position) const{
+	return m_values[position.getIndex()].load(std::memory_order_relaxed);
+//	return m_values[position.getIndex()].load(std::memory_order_acquire);
+}
+template<uint64_t Capacity, class NativeType>
+bool
+IndexQueue<Capacity, NativeType>::tryToPublishAt(
+		typename IndexQueue<Capacity, NativeType>::Index writePosition,
+		Index &oldValue,
+		Index newValue){
+	return m_values[writePosition.getIndex()].
+			compare_exchange_strong(
+				oldValue, newValue,
+				std::memory_order_relaxed,
+				std::memory_order_relaxed
+//				std::memory_order_release,
+//				std::memory_order_acquire
+				);
+}
+template<uint64_t Capacity, class NativeType>
+typename IndexQueue<Capacity, NativeType>::Index
+IndexQueue<Capacity, NativeType>::updateNextWritePosition(Index oldWritePosition){
+	// compare_exchange updates oldWritePosition
+	// if not succeed
+	// else oldWritePosition stays unchanged
+	// and will be updated in if(succeed)
+	Index newWritePosition(oldWritePosition+1);
+	auto succeed = m_nextWritePosition.compare_exchange_strong(
+				oldWritePosition, newWritePosition,
+				std::memory_order_relaxed,
+				std::memory_order_relaxed
+//				std::memory_order_release,
+//				std::memory_order_acquire
+				);
+	if(succeed){
+		oldWritePosition = newWritePosition;
+	}
+	return oldWritePosition; // updated
+}
+template<uint64_t Capacity, class NativeType>
+bool
+IndexQueue<Capacity, NativeType>::tryToAchieveOwnershipAt(Index& oldReadPosition){
+	Index newReadPosition(oldReadPosition + 1);
+	return m_nextReadPosition.compare_exchange_strong(
+			oldReadPosition, newReadPosition,
+			std::memory_order_relaxed,
+			std::memory_order_relaxed);
+}
 
 template<uint64_t Capacity, class NativeType>
 bool IndexQueue<Capacity, NativeType>::empty()
@@ -335,9 +254,41 @@ bool IndexQueue<Capacity, NativeType>::empty()
     }
     return false;
 }
-//template<uint64_t Capacity, class NativeType>
-//constexpr typename IndexQueue<Capacity, NativeType>::NativeType IndexQueue<Capacity, NativeType>::capacity()
-//{
-//    return Capacity;
-//}
+// =================================================================
+// helper functions for development
+// =================================================================
+template<uint64_t Capacity, class NativeType>
+void
+IndexQueue<Capacity, NativeType>::printThreadInfo(const char* message) const
+{
+	return;// switch on/off output
+
+	using namespace std;
+	cout << endl << "IndexQueue: " << this_thread::get_id() << " " << message << endl;
+}
+template<uint64_t Capacity, class NativeType>
+void
+IndexQueue<Capacity, NativeType>::print() const
+{
+	//return;// switch on/off output
+
+	using namespace std;
+	cout << endl << "IndexQueue::print()" << endl;
+	auto rPos = loadNextReadPosition();
+	auto wPos = loadNextWritePosition();
+	cout
+	<< "rPos head[" << rPos.getCycle() << ", " << rPos.getIndex() << "]" << endl
+	<< "wPos tail[" << wPos.getCycle() << ", " << wPos.getIndex() << "]" << endl
+	;
+
+	for(NativeType i=0; i<Capacity; ++i){
+		auto idx = loadValueAt(Index(i));
+		cout
+		<< "m_values[" << i << "]: ["
+		<< idx.getCycle() << ", "
+		<< idx.getIndex() << "]"
+		<< endl
+		;
+	}
+}
 } // namespace iox

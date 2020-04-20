@@ -66,7 +66,7 @@ public:
 template<class SUTType, class Params>
 inline
 void IndexQueueTestPushMultithreaded<SUTType, Params>::pushToEmptyQueue(){
-	SUT source(SUT::ConstructFull::Policy);
+	SUT source(SUT::ConstructFull);
 	SUT sut;
 	Policy SUTpolicy;
 	Policy testPolicy;
@@ -132,7 +132,7 @@ void IndexQueueTestPushMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 template<class SUTType, class Params>
 inline
 void IndexQueueTestPushMultithreaded<SUTType, Params>::pushToFilledQueue(){
-	SUT source(SUT::ConstructFull::Policy);
+	SUT source(SUT::ConstructFull);
 	SUT sut;
 	Policy SUTpolicy;
 	Policy testPolicy;
@@ -205,144 +205,3 @@ void IndexQueueTestPushMultithreaded<SUTType, Params>::pushToFilledQueue(){
 	ASSERTM("no more unique indices available", succeed);
 	ASSERT_EQUALM("second pop", expectedSUT, idxSUTToPush.getIndex());
 }
-////---------------------------------------------------------------------
-////
-////---------------------------------------------------------------------
-//template<class SUTType, class Params>
-//inline
-//void IndexQueueTestPushMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
-//	using namespace std; //numerical literals
-//	using UniqueIdx = typename SUT::UniqueIndexType;
-//	using NativeType = typename SUT::NativeType;
-//
-//	SUT source(SUT::ConstructFull::Policy);
-//	SUT sut;
-//	Policy SUTpolicy;
-//	Policy testPolicy;
-//
-//	constexpr auto sutCheckpoint = Params::sutCheckpoint;
-//	constexpr auto testCheckpoint = Params::testCheckpoint;
-//
-//	//---------------------------
-//	// begin region
-//	// this test is a first try and must be split into two tests,
-//	// no cases in tests!
-//	//---------------------------
-//	//if(sutCheckpoint == SUT::AfterLoadPosition)
-//	// pop will succeed, there should be an index to pop
-//	// else (sutCheckpoint == SUT::AfterLoadValue)
-//	// pop will fail, queue seems to be empty
-//
-//	// ::max() is needed cause there is no invalid state of UniqueIndexType
-//	UniqueIdx idxSUTToPop{std::numeric_limits<NativeType>::max()};
-//	NativeType expectedPopValueSUT{0};
-//	bool expectedPopReturnValue{true};
-//	bool popReturnValue{false};
-//
-//	UniqueIdx idxTestToPush;
-//	bool succeed = source.pop(idxTestToPush);
-//
-//	ASSERTM("no more unique indices available", succeed);
-//	ASSERT_EQUALM("expected pop value", expectedPopValueSUT, idxTestToPush.getIndex());
-//
-//	if(sutCheckpoint == SUT::AfterLoadValue){
-//		// pop will fail, queue seems to be empty
-//		expectedPopValueSUT = std::numeric_limits<NativeType>::max();
-//		expectedPopReturnValue = false;
-//		popReturnValue = true; // will be set to false
-//	}
-//	//---------------------------
-//	// end region
-//	// this test is a first try and must be split into two tests,
-//	// no cases in tests!
-//	//---------------------------
-//
-//	// sut will be interrupted
-//	auto SUTTask = [&](){
-//		popReturnValue = sut.pop(idxSUTToPop, SUTpolicy);
-//	};
-//	auto testTask = [&](){
-//		sut.push(std::move(idxTestToPush), testPolicy);
-//	};
-//	{	// no assertions inside this block
-//
-//		// interrupt sut
-//		SUTpolicy.lock(sutCheckpoint);
-//		Thread SUTthread(SUTTask);
-//		SUTpolicy.waitForArrival(sutCheckpoint);
-//
-//		print(sut, "sut after sutCheckpoint");
-//
-//		// interrupt test
-//		testPolicy.lock(testCheckpoint); // 0 == no checkpoint
-//		Thread testThread(testTask);
-//		testPolicy.waitForArrival(testCheckpoint);
-//
-//		print(sut, "sut after testCheckpoint");
-//
-//		//release sut to proceed
-//		SUTpolicy.unlock();
-//		SUTthread.join();
-//
-//		//release test to proceed
-//		testPolicy.unlock();
-//		testThread.join();
-//
-//		print(sut, "sut after thread.join");
-//	}
-//	ASSERT_EQUALM("pop not succeed", expectedPopReturnValue, popReturnValue);
-//	ASSERT_EQUALM("popped value", expectedPopValueSUT, idxSUTToPop.getIndex());
-//}
-////---------------------------------------------------------------------
-//template<class SUTType, class Params>
-//inline
-//void IndexQueueTestPushMultithreaded<SUTType, Params>::popFromFilledWhilePop(){
-//	using namespace std; //numerical literals
-//	using UniqueIdx = typename SUT::UniqueIndexType;
-//	using NativeType = typename SUT::NativeType;
-//
-//	SUT sut(SUT::ConstructFull::Policy);
-//	Policy firstPolicy;
-//
-//	constexpr auto firstCheckpoint = Params::sutCheckpoint;
-//
-//	// ::max() is needed cause there is no invalid state of UniqueIndexType
-//	UniqueIdx idxFirstToPop{std::numeric_limits<NativeType>::max()};
-//	NativeType expectedFirstPopValue{1};
-//	bool popFirstReturnValue{false};
-//
-//	// firstTask will be interrupted
-//	auto firstTask = [&](){
-//		popFirstReturnValue = sut.pop(idxFirstToPop, firstPolicy);
-//	};
-//
-//	UniqueIdx idxSecondToPop{std::numeric_limits<NativeType>::max()};
-//	NativeType expectedSecondPopValue{0};
-//	bool popSecondReturnValue{false};
-//
-//	constexpr bool expectedPopReturnValue{true};
-//
-//	{	// no assertions inside this block
-//
-//		// interrupt sut
-//		firstPolicy.lock(firstCheckpoint);
-//		Thread firstThread(firstTask);
-//		firstPolicy.waitForArrival(firstCheckpoint);
-//
-//		print(sut, "sut after sutCheckpoint");
-//
-//		popSecondReturnValue = sut.pop(idxSecondToPop);
-//
-//		print(sut, "sut after test pop");
-//
-//		//release first to proceed
-//		firstPolicy.unlock();
-//		firstThread.join();
-//
-//		print(sut, "sut after thread.join");
-//	}
-//	ASSERT_EQUALM("first pop not succeed", expectedPopReturnValue, popFirstReturnValue);
-//	ASSERT_EQUALM("first popped value", expectedFirstPopValue, idxFirstToPop.getIndex());
-//	ASSERT_EQUALM("second pop not succeed", expectedPopReturnValue, popSecondReturnValue);
-//	ASSERT_EQUALM("second value", expectedSecondPopValue, idxSecondToPop.getIndex());
-//}

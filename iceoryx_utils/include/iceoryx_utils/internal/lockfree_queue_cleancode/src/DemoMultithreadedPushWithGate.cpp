@@ -21,7 +21,7 @@ void demoEquivalenceclassA(){ //NoConcurrencyPush
 	constexpr size_t Capacity{4};
 	using Queue = iox::IndexQueue<Capacity>;
 	using IdxType = Queue::UniqueIndexType;
-	Queue queue(Queue::ConstructFull::Policy);
+	Queue queue(Queue::ConstructFull);
 	IdxType idx;
 	queue.print();
 	queue.pop(idx);
@@ -41,7 +41,7 @@ void demoEquivalenceclassB(){ // test thread is not interrupted
 	using Queue = iox::IndexQueue<Capacity>;
 	using IdxType = Queue::UniqueIndexType;
 
-	Queue queue(Queue::ConstructFull::Policy);
+	Queue queue(Queue::ConstructFull);
 	IdxType idx, idx0, idx1;
 
 	queue.pop(idx0);// 0
@@ -84,7 +84,7 @@ void demoEquivalenceclassC(){ // test thread is interrupted
 	using Queue = iox::IndexQueue<Capacity>;
 	using IdxType = Queue::UniqueIndexType;
 
-	Queue queue(Queue::ConstructFull::Policy);
+	Queue queue(Queue::ConstructFull);
 	IdxType idx, idx0, idx1;
 
 	queue.pop(idx0);// 0

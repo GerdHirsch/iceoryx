@@ -69,7 +69,7 @@ public:
 template<class SUTType, class Params>
 inline
 void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
-	SUT source(SUT::ConstructFull::Policy);
+	SUT source(SUT::ConstructFull);
 //	SUT source(SUT::ConstructFull);
 	SUT sut;
 	Policy sutPolicy;
@@ -148,7 +148,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 template<class SUTType, class Params>
 inline
 void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromFilledWhilePop(){
-	SUT sut(SUT::ConstructFull::Policy);
+	SUT sut(SUT::ConstructFull);
 	SUT source;
 	Policy sutPolicy;
 	Policy testPolicy;
@@ -214,7 +214,7 @@ inline
 void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyAfterFull_No_1(){
 	// sut will be drained from this function
 	// in No_2, sut will be drained from testThread
-	SUT sut(SUT::ConstructFull::Policy);
+	SUT sut(SUT::ConstructFull);
 	Policy sutPolicy;
 	Policy testPolicy;
 
@@ -280,7 +280,7 @@ inline
 void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyAfterFull_No_2(){
 	// sut will be drained from testThread
 	// in No_1 sut will be drained from this function
-	SUT sut(SUT::ConstructFull::Policy);
+	SUT sut(SUT::ConstructFull);
 	Policy sutPolicy;
 	Policy testPolicy;
 

@@ -17,6 +17,7 @@
 #include "cyclic_index.hpp"
 #include "unique_index.hpp"
 #include "empty_monitoring_policy.hpp"
+#include "GetMinSizedType.hpp"
 
 #include <atomic>
 #include <thread>
@@ -29,7 +30,7 @@ namespace iox
 /// @SynchronizationPolicy threadsafe, waitfree, memory neutral,
 /// all members are atomic<CyclicIndex>
 /// all atomic operations (load, compare_exchange_strong) are relaxed
-template <uint64_t Capacity_, class NativeType_ = uint64_t>
+template <uint64_t Capacity_, class NativeType_ = getMinSizedType_t<Capacity_>>
 class IndexQueue
 {
   public:
@@ -38,63 +39,27 @@ class IndexQueue
 	static constexpr NativeType CAPACITY{Capacity_};
 
     using UniqueIndexType = UniqueIndex<NativeType, CAPACITY>;
-//    using indexvalue_t = word_t;
-    void print() const;
-    void printThreadInfo(const char* message)const;
-//    template<class MonitoringPolicy=EmptyMonitoringPolicy>
-//    void demoMonitoringPolicy(MonitoringPolicy const& policy=MonitoringPolicy());
+    using value_type = UniqueIndexType; // for standard conformmity
 
-//    template<class MonitoringPolicy=EmptyMonitoringPolicy>
-//    void demoMonitoringPolicy(MonitoringPolicy const& policy=MonitoringPolicy()){
-//    	policy.print();
-//    }
-  private:
-    using Index = CyclicIndex<CAPACITY>;
-
-    Index loadNextReadPosition() const;
-    Index loadNextWritePosition() const;
-    Index loadValueAt(Index position) const;
-    bool tryToPublishAt(Index writePosition, Index& oldValue, Index newValue);
-    bool tryToAchieveOwnership(Index& readPosition); // head
-    Index updateNextWritePosition(Index oldWritePosition);// tail
-//    bool isUsed(NativeType valueCycle, NativeType tailCycle);
-    // @todo: a compile time check whether atomic<Index> is actually lock free would be nice (is there a solution with
-    // c++11?)
-    // inner call is not constexpr so we cannot do compile time check here ...
-    // static_assert(std::atomic<Index>{}.is_lock_free());
-
-    std::atomic<Index> m_values[CAPACITY];
-    std::atomic<Index> m_head; // read
-    std::atomic<Index> m_tail; // write
-
-  public:
-    // checkPoints for test instrumentation
-    enum {AfterLoadPosition=1, AfterLoadValue=2, BeforeUpdatePosition=4, EndOfMethod };
     // just to distingish between constructors at compile time and make the
     // construction policy more explicit
-    enum class ConstructFull
+    class ConstructFull_t
     {
-        Policy
     };
 
-    enum class ConstructEmpty
+    class ConstructEmpty_t
     {
-        Policy
     };
-
+    static  constexpr ConstructFull_t ConstructFull{};
+    static  constexpr ConstructEmpty_t ConstructEmpty{};
     /// @brief constructs an empty IndexQueue
-    IndexQueue(ConstructEmpty policy = ConstructEmpty::Policy);
+    IndexQueue(ConstructEmpty_t = ConstructEmpty);
 
     /// @brief constructs IndexQueue filled with all indices 0,1,...capacity-1
-    IndexQueue(ConstructFull);
-
-    /// @brief get the capacity of the IndexQueue
-    /// @return capacity of the IndexQueue
-    /// threadsafe, lockfree
-    constexpr NativeType capacity();
+    IndexQueue(ConstructFull_t);
 
     /// @brief push index into the queue in FIFO order
-    /// constraint: pushing more indices than capacity is not allowed
+    /// constraint: pushing more indices than capacity is not allowed (and not possible with UniqueIndex)
     /// constraint: only indices in the range [0, Capacity-1] are allowed
     /// threadsafe, lockfree
     template<class MonitoringPolicy=EmptyMonitoringPolicy>
@@ -115,12 +80,45 @@ class IndexQueue
     /// all members are atomic<CyclicIndex>
     bool popIfFull(UniqueIndexType& uniqueIdx);
 
+    /// @brief get the capacity of the IndexQueue
+   /// @return capacity of the IndexQueue
+   /// threadsafe, lockfree
+   constexpr NativeType capacity(){ return CAPACITY; }
+
+
     /// @brief check whether the queue is empty
     /// @return true iff the queue is empty
     /// note that if the queue is used concurrently it might
     /// not be empty anymore after the call
     /// (but it was at some point during the call)
     bool empty();
+
+  private:
+    using Index = CyclicIndex<CAPACITY>;
+
+    Index loadNextReadPosition() const;
+    Index loadNextWritePosition() const;
+    Index loadValueAt(Index position) const;
+    bool tryToPublishAt(Index writePosition, Index& oldValue, Index newValue);
+    bool tryToAchieveOwnershipAt(Index& readPosition); // head
+    Index updateNextWritePosition(Index oldWritePosition);// tail
+//    bool isUsed(NativeType valueCycle, NativeType tailCycle);
+    // @todo: a compile time check whether atomic<Index> is actually lock free would be nice (is there a solution with
+    // c++11?)
+    // inner call is not constexpr so we cannot do compile time check here ...
+    // static_assert(std::atomic<Index>{}.is_lock_free());
+
+    std::atomic<Index> m_values[CAPACITY];
+    std::atomic<Index> m_nextReadPosition; // aka head
+    std::atomic<Index> m_nextWritePosition; // aka tail
+  public:
+    // helper functions for development
+    void print() const;
+    void printThreadInfo(const char* message) const;
+    // checkPoints for test instrumentation
+    enum {AfterLoadPosition=1, AfterLoadValue=2, BeforeUpdatePosition=4, EndOfMethod };
+
+
 };
 } // namespace iox
 

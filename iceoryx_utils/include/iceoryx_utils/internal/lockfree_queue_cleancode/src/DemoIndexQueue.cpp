@@ -22,8 +22,8 @@ void demoIndexQueue(){
 	using Queue = iox::IndexQueue<Capacity>;
 	using IdxType = Queue::UniqueIndexType;
 
-	Queue freeIndices(Queue::ConstructFull::Policy);
-	Queue usedIndices(Queue::ConstructEmpty::Policy);
+	Queue freeIndices(Queue::ConstructFull);
+	Queue usedIndices(Queue::ConstructEmpty);
 
 	cout << "==== full Queue freeIndices.print() " << endl;
 	freeIndices.print();

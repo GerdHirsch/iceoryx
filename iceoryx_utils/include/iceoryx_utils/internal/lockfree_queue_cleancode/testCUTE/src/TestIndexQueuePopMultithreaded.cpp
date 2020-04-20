@@ -47,16 +47,16 @@ void testIndexQueuePopMultiThreaded(int argc, char const *argv[]) {
 	// SUT thread runs to completion
 	//============================================
 //	cute::makeRunner(listener,argc,argv)(IQTestPosition<Queue<1>>::make_suite(), "pop CheckPoint AfterLoadPosition");
-//	cute::makeRunner(listener,argc,argv)(IQTestPosition<Queue<2>>::make_suite(), "pop CheckPoint AfterLoadPosition");
+	cute::makeRunner(listener,argc,argv)(IQTestPosition<Queue<2>>::make_suite(), "pop CheckPoint AfterLoadPosition");
 	cute::makeRunner(listener,argc,argv)(IQTestPosition<Queue<3>>::make_suite(), "pop CheckPoint AfterLoadPosition");
 	cute::makeRunner(listener,argc,argv)(IQTestPosition<Queue<5>>::make_suite(), "pop CheckPoint AfterLoadPosition");
 	cute::makeRunner(listener,argc,argv)(IQTestPosition<Queue<10>>::make_suite(), "pop CheckPoint AfterLoadPosition");
 //	//============================================
 //	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<1>>::make_suite(), "pop CheckPoint AfterLoadValue");
-//	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<2>>::make_suite(), "pop CheckPoint AfterLoadValue");
-//	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<3>>::make_suite(), "pop CheckPoint AfterLoadValue");
-//	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<5>>::make_suite(), "pop CheckPoint AfterLoadValue");
-//	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<10>>::make_suite(), "pop CheckPoint AfterLoadValue");
+	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<2>>::make_suite(), "pop CheckPoint AfterLoadValue");
+	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<3>>::make_suite(), "pop CheckPoint AfterLoadValue");
+	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<5>>::make_suite(), "pop CheckPoint AfterLoadValue");
+	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<10>>::make_suite(), "pop CheckPoint AfterLoadValue");
 }
 
 

@@ -11,23 +11,21 @@ using namespace std;
 
 void demoCyclicIndexOverflow();
 void demoIndexQueue();
-void demoIdentity();
+void demoGetMinSizedType();
 void demoEmbeddedInts();
 void demoMultithreadedPushWithGate();
-void demoEndlessloopInPop();
-void demoMKIndexQueue();
+void demoMKIndexQueue(); // exluded from build
 
 int main(){
 	cout << "KillatQueue" << endl;
 
 //	demoCyclicIndexOverflow();
 //	demoIndexQueue();
-//	demoEndlessloopInPop();
 //	demoEmbeddedInts();
-//	demoIdentity();
+	demoGetMinSizedType();
 //	demoMultithreadedPushWithGate();
 
-	demoMKIndexQueue();
+//	demoMKIndexQueue();
 }
 
 

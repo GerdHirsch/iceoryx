@@ -260,20 +260,21 @@ bool IndexQueue<Capacity, NativeType>::popIfFull(UniqueIndexType& uniqueIdx, Mon
 	auto value = loadValueAt(readPosition);
 	policy.checkPoint(AfterLoadValue);
 
+	bool returnValue = false;
+
 	auto isFull = [&](){
 		return 	writePosition.getIndex() == readPosition.getIndex() &&
 				readPosition.isBehind(writePosition);
 	};
-
 	if(isFull()){
 		auto ownershipAchieved = tryToAchieveOwnershipAt(readPosition);
 		if(ownershipAchieved){
 			uniqueIdx = value_type(value.getIndex()); // implizit move
-			return true;
+			returnValue = true;
 		}
 	}//else someone else has popped an identity
 	policy.checkPoint(EndOfMethod);
-	return false;
+	return returnValue;
 }
 //
 //template<uint64_t Capacity, class NativeType>

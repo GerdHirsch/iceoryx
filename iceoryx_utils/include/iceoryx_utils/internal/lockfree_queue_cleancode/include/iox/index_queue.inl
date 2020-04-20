@@ -29,7 +29,7 @@ IndexQueue<Capacity, NativeType>::IndexQueue(ConstructFull_t)
  * the queue will be full and no more uniqueIdx are available to push
  */template<uint64_t Capacity, class NativeType>
 template<class MonitoringPolicy>
-void IndexQueue<Capacity, NativeType>::push(UniqueIndexType uniqueIdx, MonitoringPolicy const& policy)
+void IndexQueue<Capacity, NativeType>::push(value_type uniqueIdx, MonitoringPolicy const& policy)
 {
 //	 to consider:
 //	 all statements of this algorithm can be relaxed!
@@ -80,7 +80,7 @@ void IndexQueue<Capacity, NativeType>::push(UniqueIndexType uniqueIdx, Monitorin
  */
 template<uint64_t Capacity, class NativeType>
 template<class MonitoringPolicy>
-bool IndexQueue<Capacity, NativeType>::pop(UniqueIndexType& uniqueIdx, MonitoringPolicy const& policy)
+bool IndexQueue<Capacity, NativeType>::pop(value_type& uniqueIdx, MonitoringPolicy const& policy)
 {
     Index value;
     bool notEmpty=true;
@@ -150,7 +150,7 @@ bool IndexQueue<Capacity, NativeType>::pop(UniqueIndexType& uniqueIdx, Monitorin
  */
 template<uint64_t Capacity, class NativeType>
 template<class MonitoringPolicy>
-bool IndexQueue<Capacity, NativeType>::popIfFull(UniqueIndexType& uniqueIdx, MonitoringPolicy const& policy)
+bool IndexQueue<Capacity, NativeType>::popIfFull(value_type& uniqueIdx, MonitoringPolicy const& policy)
 {
 
 	auto writePosition= loadNextWritePosition(); // tail

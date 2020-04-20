@@ -39,7 +39,7 @@ class IndexQueue
 	static constexpr NativeType CAPACITY{Capacity_};
 
     using UniqueIndexType = UniqueIndex<NativeType, CAPACITY>;
-    using value_type = UniqueIndexType; // for standard conformmity
+    using value_type = UniqueIndexType; // for standard conformity
 
     // just to distingish between constructors at compile time and make the
     // construction policy more explicit
@@ -63,14 +63,14 @@ class IndexQueue
     /// constraint: only indices in the range [0, Capacity-1] are allowed
     /// threadsafe, lockfree
     template<class MonitoringPolicy=EmptyMonitoringPolicy>
-    void push(UniqueIndexType uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
+    void push(value_type uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
 
     /// @brief tries to remove index in FIFO order
     /// @return true iff removal was successful (i.e. queue was not empty)
     /// value is only valid if the function returns true
     /// threadsafe, lockfree
     template<class MonitoringPolicy=EmptyMonitoringPolicy>
-    bool pop(UniqueIndexType& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
+    bool pop(value_type& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
 
 
     /// @brief tries to remove index in FIFO order iff the queue is full
@@ -79,7 +79,7 @@ class IndexQueue
     /// @SynchronizationPolicy threadsafe, waitfree, memory neutral,
     /// all members are atomic<CyclicIndex>
     template<class MonitoringPolicy=EmptyMonitoringPolicy>
-    bool popIfFull(UniqueIndexType& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
+    bool popIfFull(value_type& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
 
     /// @brief get the capacity of the IndexQueue
    /// @return capacity of the IndexQueue

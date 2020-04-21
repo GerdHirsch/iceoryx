@@ -16,9 +16,26 @@ using namespace std;
 
 void demoGetMinSizedType(){
 	cout << "demoGetMinSizedType()" << __FILE__ << endl;
+//	constexpr Optimization opt{Optimization::SPEED};
+	constexpr Optimization opt{Optimization::STORAGE};
 
-	cout << "sizeof(getMinSizedType_t<1>): " << sizeof(getMinSizedType_t<1>) << endl;
-	cout << "numeric_limits<type>		:" << std::hex << numeric_limits< getMinSizedType_t<1>>::max() << std::dec << endl;
+	using OneByte = getMinSizedType_t<0x1, opt>;
+	using TwoBytes = getMinSizedType_t<0xFF, opt>;
+	using FourBytes = getMinSizedType_t<0x1FFFF, opt>;
+	using EightBytes = getMinSizedType_t<0x1FFFFFFFF, opt>;
+
+	cout << "sizeof(getMinSizedType_t<0x1>): " << sizeof(getMinSizedType_t<0x1, opt>) << endl;
+	cout << "sizeof(getMinSizedType_t<0xFF>): " << sizeof(getMinSizedType_t<0xFF, opt>) << endl;
+	cout << "sizeof(getMinSizedType_t<0x1FFFF>): " << sizeof(getMinSizedType_t<0x1FFFF, opt>) << endl;
+	cout << "sizeof(getMinSizedType_t<0x1FFFFFFFF>): " << sizeof(getMinSizedType_t<0x1FFFFFFFF, opt>) << endl;
+
+
+	cout << endl;
+	cout << "numeric_limits<OneByte>		:" << std::hex << static_cast<int>(numeric_limits< OneByte>::max()) << std::dec << endl;
+	cout << "numeric_limits<TwoBytes>		:" << std::hex << numeric_limits< TwoBytes>::max() << std::dec << endl;
+	cout << "numeric_limits<FourBytes>		:" << std::hex << numeric_limits< FourBytes>::max() << std::dec << endl;
+	cout << "numeric_limits<EightBytes>		:" << std::hex << numeric_limits< EightBytes>::max() << std::dec << endl;
+
 	cout << endl;
 	cout << "LSBitABACounter 1: " << getMinSizedType<1>::LSBitABACounter << endl;
 	cout << "IndexBits : 	" << getMinSizedType<1>::IndexBits << endl;

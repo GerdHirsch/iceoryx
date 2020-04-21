@@ -9,6 +9,7 @@
 #define INCLUDE_GETMINSIZEDTYPE_HPP_
 
 #include <cstdint>
+#include <type_traits>
 
 enum class Optimization{SPEED, STORAGE};
 
@@ -30,18 +31,41 @@ struct CalculateBits{
 	}
 };
 
+template<bool condition, class TrueType, class FalseType>
+using IF = typename std::conditional<condition, TrueType, FalseType>::type;
+
 //template<std::uint64_t Capacity, Optimization OPTIMIZATION_ = Optimization::STORAGE>
 template<std::uint64_t Capacity, Optimization = Optimization::STORAGE>
 struct getMinSizedType;
 
 template<std::uint64_t Capacity>
 struct getMinSizedType<Capacity, Optimization::SPEED>:CalculateBits<Capacity>{
-	using type = std::uint_fast64_t;
+	using base_type = CalculateBits<Capacity>;
+	static constexpr std::uint64_t IdxB_8{base_type::IndexBits+8};
+	using type =
+			IF<IdxB_8 <= sizeof(std::uint8_t)*8,
+				std::uint_fast8_t,
+			IF<IdxB_8 <= sizeof(std::uint16_t)*8,
+				std::uint_fast16_t,
+			IF<IdxB_8 <= sizeof(std::uint32_t)*8,
+				std::uint_fast32_t,
+				std::uint_fast64_t
+			>>>;
 };
 
 template<std::uint64_t Capacity>
 struct getMinSizedType<Capacity, Optimization::STORAGE>:CalculateBits<Capacity>{
-	using type = std::uint16_t;
+	using base_type = CalculateBits<Capacity>;
+	static constexpr std::uint64_t IdxB_8{base_type::IndexBits+8};
+	using type =
+			IF<IdxB_8 <= sizeof(std::uint8_t)*8,
+				std::uint_least8_t,
+			IF<IdxB_8 <= sizeof(std::uint16_t)*8,
+				std::uint_least16_t,
+			IF<IdxB_8 <= sizeof(std::uint32_t)*8,
+				std::uint_least32_t,
+				std::uint_least64_t
+			>>>;
 };
 
 template<std::uint64_t Capacity, Optimization OPTIMIZATION = Optimization::STORAGE>

@@ -20,7 +20,7 @@ void demoIndexQueue(){
 	constexpr size_t Capacity{4};
 
 	using Queue = iox::IndexQueue<Capacity>;
-	using IdxType = Queue::UniqueIndexType;
+	using IdxType = Queue::value_type;
 
 	Queue freeIndices(Queue::ConstructFull);
 	Queue usedIndices(Queue::ConstructEmpty);

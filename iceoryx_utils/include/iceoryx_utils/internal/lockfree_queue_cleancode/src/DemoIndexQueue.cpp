@@ -10,7 +10,6 @@
 #include "../include/iox/gated_monitoring_policy.hpp"
 
 #include <iostream>
-#include "../include/iox/mk/index_queue_mk_old.hpp"
 
 using namespace std;
 

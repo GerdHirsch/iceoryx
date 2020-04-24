@@ -66,7 +66,7 @@ class IndexQueue
 
     /// @brief tries to remove index in FIFO order
     /// @return true iff removal was successful (i.e. queue was not empty)
-    /// value is only valid if the function returns true
+    /// uniqueIdx is only valid if the function returns true
     /// threadsafe, lockfree
     template<class MonitoringPolicy=EmptyMonitoringPolicy>
     bool pop(value_type& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
@@ -74,7 +74,7 @@ class IndexQueue
 
     /// @brief tries to remove index in FIFO order iff the queue is full
     /// @return true iff removal was successful (i.e. queue was full)
-    /// value is only valid if the function returns true
+    /// uniqueIdx is only valid if the function returns true
     /// @SynchronizationPolicy threadsafe, waitfree, memory neutral,
     /// all members are atomic<CyclicIndex>
     template<class MonitoringPolicy=EmptyMonitoringPolicy>
@@ -98,17 +98,16 @@ class IndexQueue
 
     Index loadNextReadPosition() const;
     Index loadNextWritePosition() const;
-    Index loadValueAt(Index position) const;
-    bool tryToPublishAt(Index writePosition, Index& oldValue, Index newValue);
+    Index loadCellAt(Index position) const;
+    bool tryToPublishAt(Index writePosition, Index& oldCell, Index newCell);
     bool tryToAchieveOwnershipAt(Index& readPosition); // head
     Index updateNextWritePosition(Index oldWritePosition);// tail
-//    bool isUsed(NativeType valueCycle, NativeType tailCycle);
     // @todo: a compile time check whether atomic<Index> is actually lock free would be nice (is there a solution with
     // c++11?)
     // inner call is not constexpr so we cannot do compile time check here ...
     // static_assert(std::atomic<Index>{}.is_lock_free());
 
-    std::atomic<Index> m_values[CAPACITY];
+    std::atomic<Index> m_cells[CAPACITY];
     std::atomic<Index> m_nextReadPosition; // aka head
     std::atomic<Index> m_nextWritePosition; // aka tail
   public:
@@ -116,7 +115,7 @@ class IndexQueue
     void print() const;
     void printThreadInfo(const char* message) const;
     // checkPoints for test instrumentation
-    enum {AfterLoadPosition=1, AfterLoadValue=2, BeforeUpdatePosition=4, EndOfMethod };
+    enum {AfterLoadPosition=1, AfterLoadCell=2, BeforeUpdatePosition=4, EndOfMethod };
 
 
 };

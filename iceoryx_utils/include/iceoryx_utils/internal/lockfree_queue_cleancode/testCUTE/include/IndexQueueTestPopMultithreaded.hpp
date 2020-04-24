@@ -85,7 +85,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 //==========================
 	//if(sutCheckpoint == SUT::AfterLoadPosition)
 	// pop will succeed, there should be an index to pop
-	// else (sutCheckpoint == SUT::AfterLoadValue)
+	// else (sutCheckpoint == SUT::AfterLoadCell)
 	// pop will fail, queue seems to be empty
 
 	//if(sutCheckpoint == SUT::AfterLoadPosition)
@@ -101,7 +101,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 	ASSERTM("no more unique indices available", succeed);
 	ASSERT_EQUALM("expected pop value", expectedPopValueSUT, idxTestToPush.getIndex());
 
-	if(sutCheckpoint == SUT::AfterLoadValue){
+	if(sutCheckpoint == SUT::AfterLoadCell){
 		// pop will fail, queue seems to be empty
 		expectedPopValueSUT = std::numeric_limits<NativeType>::max();
 		expectedPopReturnValue = false;

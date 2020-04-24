@@ -29,7 +29,7 @@ using IQTestPosition =
 template<class SUT>
 using IQTestValue =
 		IndexQueueTestPopMultithreaded<SUT,
-		TestParameter<SUT::AfterLoadValue, SUT::EndOfMethod>>;
+		TestParameter<SUT::AfterLoadCell, SUT::EndOfMethod>>;
 //==============================================
 template<std::size_t MAX>
 using Queue = iox::IndexQueue<MAX>; //switch between different implementations
@@ -52,11 +52,11 @@ void testIndexQueuePopMultiThreaded(int argc, char const *argv[]) {
 	cute::makeRunner(listener,argc,argv)(IQTestPosition<Queue<5>>::make_suite(), "pop CheckPoint AfterLoadPosition");
 	cute::makeRunner(listener,argc,argv)(IQTestPosition<Queue<10>>::make_suite(), "pop CheckPoint AfterLoadPosition");
 //	//============================================
-//	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<1>>::make_suite(), "pop CheckPoint AfterLoadValue");
-	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<2>>::make_suite(), "pop CheckPoint AfterLoadValue");
-	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<3>>::make_suite(), "pop CheckPoint AfterLoadValue");
-	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<5>>::make_suite(), "pop CheckPoint AfterLoadValue");
-	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<10>>::make_suite(), "pop CheckPoint AfterLoadValue");
+//	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<1>>::make_suite(), "pop CheckPoint AfterLoadCell");
+	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<2>>::make_suite(), "pop CheckPoint AfterLoadCell");
+	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<3>>::make_suite(), "pop CheckPoint AfterLoadCell");
+	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<5>>::make_suite(), "pop CheckPoint AfterLoadCell");
+	cute::makeRunner(listener,argc,argv)(IQTestValue<Queue<10>>::make_suite(), "pop CheckPoint AfterLoadCell");
 }
 
 

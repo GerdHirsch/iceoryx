@@ -16,7 +16,7 @@ IndexQueue<Capacity, NativeType>::IndexQueue(ConstructFull_t)
 {
     for (NativeType i = 0; i < Capacity; ++i)
     {
-        m_values[i].store(Index(i));
+        m_cells[i].store(Index(i));
     }
 }
 /**
@@ -27,15 +27,17 @@ IndexQueue<Capacity, NativeType>::IndexQueue(ConstructFull_t)
  * and another thread publishes at this position, P_SUT will loop forever
  * hint: there must be pops also between the pushes, otherwise
  * the queue will be full and no more uniqueIdx are available to push
- */template<uint64_t Capacity, class NativeType>
+ */
+template<uint64_t Capacity, class NativeType>
 template<class MonitoringPolicy>
-void IndexQueue<Capacity, NativeType>::push(value_type uniqueIdx, MonitoringPolicy const& policy)
+void IndexQueue<Capacity, NativeType>::
+push(value_type uniqueIdx, MonitoringPolicy const& policy)
 {
 //	 to consider:
 //	 all statements of this algorithm can be relaxed!
 //	 they can not be reordered, because of
 //	 data dependencies between the statements
-//	 loadNextWritePosition->loadValueAt->newValue->tryToPublishAt->updateNextWritePosition
+//	 loadNextWritePosition->loadCellAt->newCell->tryToPublishAt->updateNextWritePosition
 //	 reordering would violate the "as if rule"
 //	 see: en.cppreference.com/w/cpp/language/as_if
 //	 only checkPoints could be reordered,
@@ -46,15 +48,15 @@ void IndexQueue<Capacity, NativeType>::push(value_type uniqueIdx, MonitoringPoli
     {
     	policy.checkPoint(AfterLoadPosition);
 
-    	auto oldValue = loadValueAt(writePosition);
-    	policy.checkPoint(AfterLoadValue);
+    	auto oldCell = loadCellAt(writePosition);
+    	policy.checkPoint(AfterLoadCell);
 
-        auto isFree = [&](){ return oldValue.isBehind(writePosition);};
+        auto isFree = [&](){ return oldCell.isBehind(writePosition);};
 
         if(isFree()){
-        	Index newValue(uniqueIdx, writePosition.getCycle() );
+        	Index newCell(uniqueIdx, writePosition.getCycle() );
         	//if publish fails, another thread has published before
-        	auto published = tryToPublishAt(writePosition, oldValue, newValue);
+        	auto published = tryToPublishAt(writePosition, oldCell, newCell);
         	if(published){
         		break;
         	}
@@ -82,26 +84,26 @@ template<uint64_t Capacity, class NativeType>
 template<class MonitoringPolicy>
 bool IndexQueue<Capacity, NativeType>::pop(value_type& uniqueIdx, MonitoringPolicy const& policy)
 {
-    Index value;
+    Index cell;
     bool notEmpty=true;
     do
     {
     	auto readPosition = loadNextReadPosition();
     	policy.checkPoint(AfterLoadPosition);
 
-    	value = loadValueAt(readPosition);
-        policy.checkPoint(AfterLoadValue);
+    	cell = loadCellAt(readPosition);
+        policy.checkPoint(AfterLoadCell);
 
-        // we only dequeue if value and readPosition is in the same cycle
-        auto isUpToDate = [&](){ return readPosition.getCycle() == value.getCycle();};
-		// readPosition is ahead by one cycle, queue was empty at loadValueAt(..)
-        auto isEmpty = [&](){ return value.isBehind(readPosition);};
+        // we only dequeue if cell and readPosition is in the same cycle
+        auto isUpToDate = [&](){ return readPosition.getCycle() == cell.getCycle();};
+		// readPosition is ahead by one cycle, queue was empty at loadCellAt(..)
+        auto isEmpty = [&](){ return cell.isBehind(readPosition);};
 
         if(isUpToDate()){
         	auto ownershipAchieved = tryToAchieveOwnershipAt(readPosition);
 			if (ownershipAchieved)
 			{
-				uniqueIdx = value_type(value.getIndex()); // implicit move()
+				uniqueIdx = value_type(cell.getIndex()); // implicit move()
 				break; // pop successful
 			}
         }else if (isEmpty()){
@@ -150,15 +152,16 @@ bool IndexQueue<Capacity, NativeType>::pop(value_type& uniqueIdx, MonitoringPoli
  */
 template<uint64_t Capacity, class NativeType>
 template<class MonitoringPolicy>
-bool IndexQueue<Capacity, NativeType>::popIfFull(value_type& uniqueIdx, MonitoringPolicy const& policy)
+bool IndexQueue<Capacity, NativeType>::
+popIfFull(value_type& uniqueIdx, MonitoringPolicy const& policy)
 {
 
 	auto writePosition= loadNextWritePosition(); // tail
 	auto readPosition= loadNextReadPosition(); // head
 	policy.checkPoint(AfterLoadPosition);
 
-	auto value = loadValueAt(readPosition);
-	policy.checkPoint(AfterLoadValue);
+	auto cell = loadCellAt(readPosition);
+	policy.checkPoint(AfterLoadCell);
 
 	bool returnValue = false;
 
@@ -169,7 +172,7 @@ bool IndexQueue<Capacity, NativeType>::popIfFull(value_type& uniqueIdx, Monitori
 	if(isFull()){
 		auto ownershipAchieved = tryToAchieveOwnershipAt(readPosition);
 		if(ownershipAchieved){
-			uniqueIdx = value_type(value.getIndex()); // implizit move
+			uniqueIdx = value_type(cell.getIndex()); // implizit move
 			returnValue = true;
 		}
 	}//else someone else has popped an identity
@@ -181,34 +184,17 @@ template<uint64_t Capacity, class NativeType>
 typename IndexQueue<Capacity, NativeType>::Index
 IndexQueue<Capacity, NativeType>::loadNextReadPosition() const{
 	return m_nextReadPosition.load(std::memory_order_relaxed);
-//	return m_nextReadPosition.load(std::memory_order_acquire);
 }
 template<uint64_t Capacity, class NativeType>
 typename IndexQueue<Capacity, NativeType>::Index
 IndexQueue<Capacity, NativeType>::loadNextWritePosition() const{
 	return m_nextWritePosition.load(std::memory_order_relaxed);
-//	return m_nextWritePosition.load(std::memory_order_acquire);
 }
 template<uint64_t Capacity, class NativeType>
 typename IndexQueue<Capacity, NativeType>::Index
-IndexQueue<Capacity, NativeType>::loadValueAt(typename IndexQueue<Capacity, NativeType>::Index position) const{
-	return m_values[position.getIndex()].load(std::memory_order_relaxed);
-//	return m_values[position.getIndex()].load(std::memory_order_acquire);
-}
-template<uint64_t Capacity, class NativeType>
-bool
-IndexQueue<Capacity, NativeType>::tryToPublishAt(
-		typename IndexQueue<Capacity, NativeType>::Index writePosition,
-		Index &oldValue,
-		Index newValue){
-	return m_values[writePosition.getIndex()].
-			compare_exchange_strong(
-				oldValue, newValue,
-				std::memory_order_relaxed,
-				std::memory_order_relaxed
-//				std::memory_order_release,
-//				std::memory_order_acquire
-				);
+IndexQueue<Capacity, NativeType>::
+loadCellAt(typename IndexQueue<Capacity, NativeType>::Index position) const{
+	return m_cells[position.getIndex()].load(std::memory_order_relaxed);
 }
 template<uint64_t Capacity, class NativeType>
 typename IndexQueue<Capacity, NativeType>::Index
@@ -222,14 +208,26 @@ IndexQueue<Capacity, NativeType>::updateNextWritePosition(Index oldWritePosition
 				oldWritePosition, newWritePosition,
 				std::memory_order_relaxed,
 				std::memory_order_relaxed
-//				std::memory_order_release,
-//				std::memory_order_acquire
 				);
 	if(succeed){
 		oldWritePosition = newWritePosition;
 	}
 	return oldWritePosition; // updated
 }
+template<uint64_t Capacity, class NativeType>
+bool
+IndexQueue<Capacity, NativeType>::tryToPublishAt(
+		typename IndexQueue<Capacity, NativeType>::Index writePosition,
+		Index &oldCell,
+		Index newCell){
+	return m_cells[writePosition.getIndex()].
+			compare_exchange_strong(
+				oldCell, newCell,
+				std::memory_order_relaxed,
+				std::memory_order_relaxed
+				);
+}
+
 template<uint64_t Capacity, class NativeType>
 bool
 IndexQueue<Capacity, NativeType>::tryToAchieveOwnershipAt(Index& oldReadPosition){
@@ -244,11 +242,11 @@ template<uint64_t Capacity, class NativeType>
 bool IndexQueue<Capacity, NativeType>::empty()
 {
     auto oldHead = m_nextReadPosition.load(std::memory_order_acquire);
-    auto value = m_values[oldHead.getIndex()].load(std::memory_order_relaxed);
+    auto cell = m_cells[oldHead.getIndex()].load(std::memory_order_relaxed);
 
-    if (value.getCycle() + 1 == oldHead.getCycle())
+    if (cell.getCycle() + 1 == oldHead.getCycle())
     {
-        // if m_nextReadPosition is ahead by one cycle compared to the value stored at head,
+        // if m_nextReadPosition is ahead by one cycle compared to the cell stored at head,
         // the queue was empty at the time of the loads ebove (but might not be anymore!)
         return true;
     }
@@ -282,9 +280,9 @@ IndexQueue<Capacity, NativeType>::print() const
 	;
 
 	for(NativeType i=0; i<Capacity; ++i){
-		auto idx = loadValueAt(Index(i));
+		auto idx = loadCellAt(Index(i));
 		cout
-		<< "m_values[" << i << "]: ["
+		<< "m_cells[" << i << "]: ["
 		<< idx.getCycle() << ", "
 		<< idx.getIndex() << "]"
 		<< endl

@@ -22,7 +22,7 @@ using IQTestPositionClassB =
 template<class SUT>
 using IQTestValueClassB =
 		IndexQueueTestPushMultithreaded<SUT,
-		TestParameter<SUT::AfterLoadValue, SUT::EndOfMethod>>;
+		TestParameter<SUT::AfterLoadCell, SUT::EndOfMethod>>;
 template<class SUT>
 using IQTestPositionClassC =
 		IndexQueueTestPushMultithreaded<SUT,
@@ -30,7 +30,7 @@ using IQTestPositionClassC =
 template<class SUT>
 using IQTestValueClassC =
 		IndexQueueTestPushMultithreaded<SUT,
-		TestParameter<SUT::AfterLoadValue, SUT::BeforeUpdatePosition>>;
+		TestParameter<SUT::AfterLoadCell, SUT::BeforeUpdatePosition>>;
 //==============================================
 template<std::size_t MAX>
 using Queue = iox::IndexQueue<MAX>; //switch between different implementations
@@ -53,11 +53,11 @@ void testIndexQueuePushMultiThreaded(int argc, char const *argv[]) {
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassB<Queue<5>>::make_suite(), "push CheckPoint AfterLoadPosition EndOfMethod");
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassB<Queue<10>>::make_suite(), "push CheckPoint AfterLoadPosition EndOfMethod");
 	//============================================
-//	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<1>>::make_suite(), "push CheckPoint AfterLoadValue EndOfMethod");
-	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<2>>::make_suite(), "push CheckPoint AfterLoadValue EndOfMethod");
-	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<3>>::make_suite(), "push CheckPoint AfterLoadValue EndOfMethod");
-	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<5>>::make_suite(), "push CheckPoint AfterLoadValue EndOfMethod");
-	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<10>>::make_suite(), "push CheckPoint AfterLoadValue EndOfMethod");
+//	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<1>>::make_suite(), "push CheckPoint AfterLoadCell EndOfMethod");
+	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<2>>::make_suite(), "push CheckPoint AfterLoadCell EndOfMethod");
+	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<3>>::make_suite(), "push CheckPoint AfterLoadCell EndOfMethod");
+	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<5>>::make_suite(), "push CheckPoint AfterLoadCell EndOfMethod");
+	cute::makeRunner(listener,argc,argv)(IQTestValueClassB<Queue<10>>::make_suite(), "push CheckPoint AfterLoadCell EndOfMethod");
 	//============================================
 	// IndexQueue Class C tests:
 	// SUT thread runs to checkpoint,
@@ -71,11 +71,11 @@ void testIndexQueuePushMultiThreaded(int argc, char const *argv[]) {
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<5>>::make_suite(), "push CheckPoint AfterLoadPosition BeforeUpdatePosition");
 	cute::makeRunner(listener,argc,argv)(IQTestPositionClassC<Queue<10>>::make_suite(), "push CheckPoint AfterLoadPosition BeforeUpdatePosition");
 	//============================================
-//	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<1>>::make_suite(), "push CheckPoint AfterLoadValue BeforeUpdatePosition");
-	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<2>>::make_suite(), "push CheckPoint AfterLoadValue BeforeUpdatePosition");
-	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<3>>::make_suite(), "push CheckPoint AfterLoadValue BeforeUpdatePosition");
-	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<5>>::make_suite(), "push CheckPoint AfterLoadValue BeforeUpdatePosition");
-	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<10>>::make_suite(), "push CheckPoint AfterLoadValue BeforeUpdatePosition");
+//	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<1>>::make_suite(), "push CheckPoint AfterLoadCell BeforeUpdatePosition");
+	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<2>>::make_suite(), "push CheckPoint AfterLoadCell BeforeUpdatePosition");
+	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<3>>::make_suite(), "push CheckPoint AfterLoadCell BeforeUpdatePosition");
+	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<5>>::make_suite(), "push CheckPoint AfterLoadCell BeforeUpdatePosition");
+	cute::makeRunner(listener,argc,argv)(IQTestValueClassC<Queue<10>>::make_suite(), "push CheckPoint AfterLoadCell BeforeUpdatePosition");
 }
 
 

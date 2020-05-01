@@ -122,14 +122,14 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyWhilePush(){
 	{	// no assertions inside this block
 
 		// interrupt sut
-		sutPolicy.lock(sutCheckpoint);
+		sutPolicy.lock(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
 		Thread SUTthread(SUTTask);
 		sutPolicy.waitForArrival(sutCheckpoint);
 
 		print(sut, "sut after sutCheckpoint");
 
 		// interrupt test
-		testPolicy.lock(testCheckpoint);
+		testPolicy.lock(testCheckpoint);  // EndOfMethod
 		Thread testThread(testTask);
 		testPolicy.waitForArrival(testCheckpoint);
 
@@ -186,7 +186,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromFilledWhilePop(){
 	{	// no assertions inside this block
 
 		// interrupt sut
-		sutPolicy.lock(sutCheckpoint);
+		sutPolicy.lock(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
 		Thread sutThread(sutTask);
 		sutPolicy.waitForArrival(sutCheckpoint);
 
@@ -244,7 +244,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyAfterFull_No_1
 	{	// no assertions inside this block
 
 		// interrupt sut
-		sutPolicy.lock(sutCheckpoint);
+		sutPolicy.lock(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
 		Thread sutThread(sutTask);
 		sutPolicy.waitForArrival(sutCheckpoint);
 
@@ -312,7 +312,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyAfterFull_No_2
 	{	// no assertions inside this block
 
 		// interrupt sut
-		sutPolicy.lock(sutCheckpoint);
+		sutPolicy.lock(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
 		Thread sutThread(sutTask);
 		sutPolicy.waitForArrival(sutCheckpoint);
 
@@ -365,7 +365,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledBeforeP
 		sut.pop(idx);
 		sut.push(std::move(idx));
 		// interrupt sut
-		sutPolicy.lock(sutCheckpoint);
+		sutPolicy.lock(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
 		Thread sutThread(sutTask);
 		sutPolicy.waitForArrival(sutCheckpoint);
 
@@ -414,7 +414,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledAfterPo
 		sut.pop(idx);
 		sut.push(std::move(idx));
 		// interrupt sut
-		sutPolicy.lock(sutCheckpoint);
+		sutPolicy.lock(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
 		Thread sutThread(sutTask);
 		sutPolicy.waitForArrival(sutCheckpoint);
 

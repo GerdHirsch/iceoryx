@@ -95,14 +95,14 @@ void IndexQueueTestPushMultithreaded<SUTType, Params>::pushToEmptyQueue(){
 	{	// no assertions inside this block
 
 		// interrupt sut
-		SUTpolicy.lock(sutCheckpoint);
+		SUTpolicy.lock(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
 		Thread SUTthread(SUTTask);
 		SUTpolicy.waitForArrival(sutCheckpoint);
 
 		print(sut, "sut after sutCheckpoint");
 
 		// interrupt test
-		testPolicy.lock(testCheckpoint); // 0 == no checkpoint
+		testPolicy.lock(testCheckpoint);  // BeforeUpdatePosition or EndOfMethod
 		Thread testThread(testTask);
 		testPolicy.waitForArrival(testCheckpoint);
 
@@ -165,13 +165,13 @@ void IndexQueueTestPushMultithreaded<SUTType, Params>::pushToFilledQueue(){
 	{	// no assertions inside this block
 
 		// interrupt sut
-		SUTpolicy.lock(sutCheckpoint);
+		SUTpolicy.lock(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
 		Thread SUTthread(SUTTask);
-		SUTpolicy.waitForArrival(sutCheckpoint); // AfterLoadPosition or AfterLoadCell
+		SUTpolicy.waitForArrival(sutCheckpoint);
 
 		print(sut, "sut after sutCheckpoint");
 
-		// interrupt test only after publishValueAt
+		// interrupt test
 		testPolicy.lock(testCheckpoint); // BeforeUpdatePosition or EndOfMethod
 		Thread testThread(testTask);
 		testPolicy.waitForArrival(testCheckpoint);

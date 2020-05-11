@@ -78,7 +78,7 @@ class IndexQueue
     /// @SynchronizationPolicy threadsafe, waitfree, memory neutral,
     /// all members are atomic<CyclicIndex>
     template<class MonitoringPolicy=EmptyMonitoringPolicy>
-    bool popIfFull(value_type& uniqueIdx, MonitoringPolicy const& = MonitoringPolicy());
+    bool popIfFull(value_type& uniqueIdx, NativeType currentCapacity=CAPACITY, MonitoringPolicy const& = MonitoringPolicy());
 
     /// @brief get the capacity of the IndexQueue
    /// @return capacity of the IndexQueue

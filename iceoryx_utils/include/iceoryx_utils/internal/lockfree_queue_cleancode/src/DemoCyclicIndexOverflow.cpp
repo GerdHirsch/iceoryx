@@ -10,14 +10,40 @@
 #include <limits>
 using namespace std;
 
+void demoCyclicIndexOperatorPlus(){
+	cout << "demoCyclicIndexOperatorPlus" << endl;
+
+	constexpr auto CycleLength = 10u;
+	using Index = iox::CyclicIndex<CycleLength>; // two indices [0][1] two values to push(..)
+
+	Index readPosition;
+	Index writePosition(0, 1);
+
+		cout
+			<< "readPosition.getIndex()	:   " << readPosition.getIndex() << endl
+			<< "readPosition.getCycle()	:   " << readPosition.getCycle() << endl
+			;
+		cout
+			<< "writePosition.getIndex()	:   " << writePosition.getIndex() << endl
+			<< "writePosition.getCycle()	:   " << writePosition.getCycle() << endl
+			;
+	if(readPosition + CycleLength == writePosition){
+		cout << "operator+ succeed" << endl;
+	}else{
+		cout << "operator+ failed" << endl;
+	}
+
+
+
+}
 
 void demoCyclicIndexOverflow(){
 	cout << "demoCyclicIndexOverflow" << endl;
-	using indexvalue_t = iox::word_t;
 
-	constexpr indexvalue_t CycleLength = 2;
-	constexpr indexvalue_t MAXCycle = 	std::numeric_limits<indexvalue_t>::max();
+	constexpr auto CycleLength = 2u;
 	using Index = iox::CyclicIndex<CycleLength>; // two indices [0][1] two values to push(..)
+	using indexvalue_t = Index::NativeType;
+	constexpr auto MAXCycle = 	std::numeric_limits<Index::NativeType>::max();
 
 	//=================================
 	// 1

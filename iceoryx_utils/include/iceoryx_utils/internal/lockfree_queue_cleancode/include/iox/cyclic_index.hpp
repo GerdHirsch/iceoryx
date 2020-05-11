@@ -20,7 +20,7 @@ namespace iox
 {
 
 // a word on the target architecture, must be able to be used in a CAS operation
-using word_t = uint64_t;
+//using word_t = uint64_t;
 //using word_t = uint16_t;
 
 // a byte on the target architecture, to be used in untyped buffers
@@ -32,20 +32,22 @@ using byte_t = uint8_t;
 
 /// @brief index structure that can contain logical values 0, ..., CycleLength-1
 /// but also stores an internal ABA counter to be used in compare_exchange
-template <uint64_t CycleLength_>
+template <uint64_t CycleLength_, typename NativeType_ = uint64_t>
 class CyclicIndex
 {
   public:
-	static constexpr uint64_t CycleLength = CycleLength_;
-	using this_type = CyclicIndex<CycleLength>;
+	using NativeType = NativeType_;
+	static constexpr NativeType CycleLength = CycleLength_;
+	using this_type = CyclicIndex<CycleLength, NativeType>;
+
     /// @brief index structure that can contain logical values 0, ..., CycleLength-1
-    explicit CyclicIndex(word_t value = 0) noexcept
+    explicit CyclicIndex(NativeType value = 0) noexcept
         : m_value(value)
     {
     }
 
     /// @brief create CyclicIndex using the actual index and a specified cycle
-    CyclicIndex(word_t index, word_t cycle) noexcept
+    CyclicIndex(NativeType index, NativeType cycle) noexcept
         : m_value(cycle * CycleLength + index)
     {
     }
@@ -55,14 +57,14 @@ class CyclicIndex
 
     /// @brief get the logical index
     /// @return logical index
-    word_t getIndex() const
+    NativeType getIndex() const
     {
         return m_value % CycleLength;
     }
 
     /// @brief get the cycle stored internally
     /// @return cycle
-    word_t getCycle() const
+    NativeType getCycle() const
     {
         return m_value / CycleLength;
     }
@@ -71,19 +73,21 @@ class CyclicIndex
     }
     /// @brief increment the internal index by one
     /// @return stored internal index value after increment
-    word_t operator++()
+    NativeType operator++()
     {
         return ++m_value;
     }
 
     /// @brief return the CyclicIndex incremented by value
     /// @return current CyclicIndex incremented by value
-    CyclicIndex operator+(word_t value)
+    CyclicIndex operator+(NativeType value)
     {
         return CyclicIndex(m_value + value);
     }
-
+    bool operator==(CyclicIndex const& lhs){
+    	return m_value == lhs.m_value;
+    }
   private:
-    word_t m_value{0};
+    NativeType m_value{0};
 };
 } // namespace iox

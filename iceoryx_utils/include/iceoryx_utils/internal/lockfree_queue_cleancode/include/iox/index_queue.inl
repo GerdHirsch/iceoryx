@@ -61,8 +61,8 @@ push(value_type uniqueIdx, MonitoringPolicy const& policy)
         		break;
         	}
         }
-		// try to help moving the nextWritePosition,
-        // can fail but we retry anyway and some enqueuer will succeed
+//		 try to help moving the nextWritePosition,
+//         can fail but we retry anyway and some enqueuer will succeed
         writePosition = updateNextWritePosition(writePosition);
 
     }while(notPublished);
@@ -153,7 +153,7 @@ bool IndexQueue<Capacity, NativeType>::pop(value_type& uniqueIdx, MonitoringPoli
 template<uint64_t Capacity, class NativeType>
 template<class MonitoringPolicy>
 bool IndexQueue<Capacity, NativeType>::
-popIfFull(value_type& uniqueIdx, MonitoringPolicy const& policy)
+popIfFull(value_type& uniqueIdx, NativeType currentCapacity, MonitoringPolicy const& policy)
 {
 
 	auto writePosition= loadNextWritePosition(); // tail
@@ -166,9 +166,12 @@ popIfFull(value_type& uniqueIdx, MonitoringPolicy const& policy)
 	bool returnValue = false;
 
 	auto isFull = [&](){
-		return 	writePosition.getIndex() == readPosition.getIndex() &&
-				readPosition.isBehind(writePosition);
+		return 	readPosition + currentCapacity == writePosition;
 	};
+//	auto isFull = [&](){
+//		return 	writePosition.getIndex() == readPosition.getIndex() &&
+//				readPosition.isBehind(writePosition);
+//	};
 	if(isFull()){
 		auto ownershipAchieved = tryToAchieveOwnershipAt(readPosition);
 		if(ownershipAchieved){

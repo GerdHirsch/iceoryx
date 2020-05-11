@@ -342,12 +342,15 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popFromEmptyAfterFull_No_2
 }
 
 //---------------------------------------------------------------------
+/// checks whether popIfFull succeeds if the queue is full
 template<class SUTType, class Params>
 inline
 void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledBeforePop(){
 	SUT sut(SUT::ConstructFull);
 	Policy sutPolicy;
 
+	constexpr auto currentCapacity = SUT::CAPACITY;
+	//------------------------------------
 	// ::max() is needed cause there is no invalid state of UniqueIndexType/value_type
 	UniqueIdx idxSutToPop{std::numeric_limits<NativeType>::max()};
 	constexpr NativeType expectedSUTPopValue{1};
@@ -355,7 +358,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledBeforeP
 
 	// sutTask will be interrupted
 	auto sutTask = [&](){
-		popSUTReturnValue = sut.popIfFull(idxSutToPop, sutPolicy);
+		popSUTReturnValue = sut.popIfFull(idxSutToPop, currentCapacity, sutPolicy);
 	};
 
 	constexpr bool expectedPopReturnValue{true};
@@ -381,6 +384,8 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledBeforeP
 	ASSERT_EQUALM("sut popped value", expectedSUTPopValue, idxSutToPop.getIndex());
 }
 //---------------------------------------------------------------------
+/// checks whether popIfFull fails if another thread pops an uniqueIndex before
+/// sut.achieveOwnershipAt(readPosition)
 template<class SUTType, class Params>
 inline
 void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledAfterPop(){
@@ -388,6 +393,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledAfterPo
 	Policy sutPolicy;
 	Policy testPolicy;
 
+	constexpr auto currentCapacity = SUT::CAPACITY;
 	//------------------------------------
 	// ::max() is needed cause there is no invalid state of UniqueIndexType/value_type
 	constexpr NativeType expectedSUTPopValue{std::numeric_limits<NativeType>::max()};
@@ -396,7 +402,7 @@ void IndexQueueTestPopMultithreaded<SUTType, Params>::popIfFullFromFilledAfterPo
 	bool popSUTReturnValue{true};
 	// sutTask will be interrupted
 	auto sutTask = [&](){
-		popSUTReturnValue = sut.popIfFull(idxSutToPop, sutPolicy);
+		popSUTReturnValue = sut.popIfFull(idxSutToPop, currentCapacity, sutPolicy);
 	};
 	//------------------------------------
 	constexpr NativeType expectedTestPopValue{1};

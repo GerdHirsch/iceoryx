@@ -8,7 +8,7 @@
 #include <iostream>
 using namespace std;
 
-
+void demoCyclicIndexOperatorPlus();
 void demoCyclicIndexOverflow();
 void demoIndexQueue();
 void demoGetMinSizedType();
@@ -22,9 +22,9 @@ int main(){
 //	demoCyclicIndexOverflow();
 //	demoIndexQueue();
 //	demoEmbeddedInts();
-	demoGetMinSizedType();
+//	demoGetMinSizedType();
 //	demoMultithreadedPushWithGate();
-
+	demoCyclicIndexOperatorPlus();
 //	demoMKIndexQueue();
 }
 
